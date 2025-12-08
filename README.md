@@ -16,6 +16,9 @@ Mobile-first **Dark Neon Glassmorphism** web app for tracking assets, liabilitie
 - **Animations:** Floating, pulse glow, fade-in-up keyframes
 - **Dummy Data:** Salary, Crypto Portfolio, Car Loan, Food Expense, etc. preloaded
 
+## UI Preview
+<img src="preview.svg" alt="FinMind UI preview" width="320" />
+
 ## File Structure
 - `index.html` — contains all HTML/CSS/JS (Tailwind from CDN; no other deps)
 - `server.js` — optional Node/Express API with Postgres (or in-memory fallback)

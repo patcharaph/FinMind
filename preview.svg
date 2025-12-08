@@ -1,0 +1,46 @@
+<svg width="360" height="720" viewBox="0 0 360 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1222"/>
+      <stop offset="1" stop-color="#050b14"/>
+    </linearGradient>
+    <linearGradient id="net" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#d946ef"/>
+      <stop offset="1" stop-color="#4f46e5"/>
+    </linearGradient>
+    <linearGradient id="pill" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#06b6d4"/>
+      <stop offset="1" stop-color="#4f46e5"/>
+    </linearGradient>
+  </defs>
+  <rect width="360" height="720" fill="url(#bg)"/>
+  <g opacity="0.5">
+    <circle cx="60" cy="120" r="120" fill="#d946ef" fill-opacity="0.08"/>
+    <circle cx="300" cy="90" r="110" fill="#06b6d4" fill-opacity="0.08"/>
+    <circle cx="220" cy="620" r="140" fill="#4f46e5" fill-opacity="0.08"/>
+  </g>
+  <rect x="18" y="40" width="324" height="36" rx="12" fill="#ffffff10" stroke="#ffffff18"/>
+  <rect x="18" y="96" width="324" height="156" rx="18" fill="url(#net)" stroke="#ffffff26"/>
+  <rect x="30" y="110" width="180" height="18" rx="9" fill="#ffffff30"/>
+  <rect x="30" y="138" width="120" height="28" rx="10" fill="#ffffffdd"/>
+  <rect x="30" y="176" width="210" height="10" rx="5" fill="#ffffff35"/>
+  <rect x="32" y="202" width="120" height="48" rx="12" fill="#ffffff16" stroke="#ffffff28"/>
+  <rect x="172" y="202" width="120" height="48" rx="12" fill="#ffffff16" stroke="#ffffff28"/>
+  <rect x="18" y="268" width="156" height="92" rx="16" fill="#0f172a90" stroke="#ffffff16"/>
+  <rect x="186" y="268" width="156" height="92" rx="16" fill="#0f172a90" stroke="#ffffff16"/>
+  <rect x="18" y="374" width="324" height="120" rx="18" fill="#0f172a90" stroke="#ffffff16"/>
+  <rect x="18" y="508" width="324" height="140" rx="18" fill="#0f172a90" stroke="#ffffff16"/>
+  <rect x="18" y="664" width="324" height="44" rx="20" fill="#0f172a90" stroke="#ffffff20"/>
+  <circle cx="180" cy="662" r="32" fill="url(#pill)" stroke="#ffffff30"/>
+  <text x="24" y="66" fill="#cbd5e1" font-family="Inter, Arial, sans-serif" font-size="12">Welcome back</text>
+  <text x="24" y="84" fill="#e2e8f0" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="600">FinMind</text>
+  <text x="32" y="133" fill="#ffffffb0" font-family="Inter, Arial, sans-serif" font-size="10">Net Worth</text>
+  <text x="32" y="161" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="26" font-weight="700">$85,000</text>
+  <text x="32" y="229" fill="#a5f3fc" font-family="Inter, Arial, sans-serif" font-size="11">Assets</text>
+  <text x="180" y="229" fill="#fecdd3" font-family="Inter, Arial, sans-serif" font-size="11">Liabilities</text>
+  <text x="30" y="304" fill="#bbf7d0" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="600">$8,200</text>
+  <text x="198" y="304" fill="#fecdd3" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="600">$4,500</text>
+  <text x="32" y="402" fill="#e2e8f0" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="600">Recent Moves</text>
+  <text x="32" y="542" fill="#e2e8f0" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="600">Advisor Stream</text>
+  <text x="70" y="693" fill="#94a3b8" font-family="Inter, Arial, sans-serif" font-size="11">Home     Assets     Advisor     History</text>
+</svg>
