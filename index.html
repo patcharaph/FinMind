@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FinMind: Agentic Wealth Tracker</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --bg: #050b14;
+      --neon-purple: #d946ef;
+      --neon-indigo: #4f46e5;
+      --neon-green: #10b981;
+      --neon-red: #ef4444;
+      --neon-cyan: #06b6d4;
+      --glass: rgba(255, 255, 255, 0.06);
+    }
+    body {
+      background: radial-gradient(circle at 20% 20%, rgba(217, 70, 239, 0.1), transparent 20%),
+                  radial-gradient(circle at 80% 10%, rgba(6, 182, 212, 0.1), transparent 22%),
+                  radial-gradient(circle at 50% 80%, rgba(79, 70, 229, 0.12), transparent 25%),
+                  var(--bg);
+      color: #e5e7eb;
+      min-height: 100vh;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    .glass {
+      background: var(--glass);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 15px 45px rgba(0, 0, 0, 0.35);
+    }
+    .card-border {
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+    }
+    .float-soft {
+      animation: float 6s ease-in-out infinite;
+    }
+    .glow {
+      box-shadow: 0 0 20px rgba(217, 70, 239, 0.3), 0 0 40px rgba(79, 70, 229, 0.2);
+    }
+    .fade-in-up {
+      animation: fadeInUp 0.6s ease both;
+    }
+    .typing-dots div {
+      width: 6px;
+      height: 6px;
+      border-radius: 9999px;
+      background: var(--neon-cyan);
+      animation: bounce 1s infinite;
+    }
+    .typing-dots div:nth-child(2) { animation-delay: 0.12s; }
+    .typing-dots div:nth-child(3) { animation-delay: 0.24s; }
+    .bottom-sheet {
+      transition: transform 0.35s ease, opacity 0.25s ease;
+    }
+    .bottom-sheet.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(24px);
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
+      40% { transform: translateY(-4px); opacity: 1; }
+    }
+  </style>
+</head>
+<body class="antialiased">
+  <div class="max-w-md mx-auto min-h-screen relative pb-24 px-4 py-6">
+    <header class="flex items-center justify-between mb-6 fade-in-up">
+      <div>
+        <p class="text-sm text-slate-400">Welcome back,</p>
+        <h1 class="text-2xl font-semibold text-white">Aurora Reyes</h1>
+      </div>
+      <div class="glass rounded-full px-3 py-1 text-xs uppercase tracking-[0.14em] text-slate-200 border border-white/10">
+        FinMind v1.0
+      </div>
+    </header>
+
+    <main class="space-y-4">
+      <section id="home" data-section class="space-y-4">
+        <div class="relative overflow-hidden rounded-2xl card-border p-[1px]">
+          <div class="bg-gradient-to-r from-[#d946ef] via-[#7c3aed] to-[#312e81] rounded-2xl p-4 text-white float-soft">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-white/70">Net Worth</p>
+                <p id="netWorth" class="text-3xl font-bold mt-1">$0</p>
+                <p class="text-xs text-white/70 mt-1">Assets - Liabilities</p>
+              </div>
+              <div class="w-12 h-12 rounded-xl bg-white/15 flex items-center justify-center glow">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+            <div class="mt-4 grid grid-cols-2 gap-3 text-sm text-white/80">
+              <div class="glass rounded-xl p-3 border border-white/20">
+                <p class="text-xs text-white/60">Total Assets</p>
+                <p id="assetTotal" class="text-lg font-semibold">$0</p>
+              </div>
+              <div class="glass rounded-xl p-3 border border-white/20">
+                <p class="text-xs text-white/60">Total Liabilities</p>
+                <p id="liabilityTotal" class="text-lg font-semibold">$0</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div class="glass rounded-2xl p-4 border border-white/10 fade-in-up">
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-xs text-slate-300">Monthly Income</p>
+              <span class="text-[10px] text-white/60 uppercase tracking-[0.12em]">Stream</span>
+            </div>
+            <p id="incomeTotal" class="text-2xl font-semibold text-emerald-300">$0</p>
+            <div class="mt-3 flex items-center text-xs text-slate-400">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 mr-2"></span> Stable flow
+            </div>
+          </div>
+          <div class="glass rounded-2xl p-4 border border-white/10 fade-in-up">
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-xs text-slate-300">Monthly Expenses</p>
+              <span class="text-[10px] text-white/60 uppercase tracking-[0.12em]">Burn</span>
+            </div>
+            <p id="expenseTotal" class="text-2xl font-semibold text-rose-300">$0</p>
+            <div class="mt-3 flex items-center text-xs text-slate-400">
+              <span class="w-2 h-2 rounded-full bg-rose-400 mr-2"></span> Contained drift
+            </div>
+          </div>
+        </div>
+
+        <div class="glass rounded-2xl p-4 border border-white/10 fade-in-up">
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-sm text-slate-200 font-medium">Recent Moves</p>
+            <span class="text-xs text-white/50">Last 5</span>
+          </div>
+          <div id="recentTransactions" class="space-y-2 text-sm"></div>
+        </div>
+      </section>
+
+      <section id="assets" data-section class="space-y-4 hidden">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-semibold text-white">Portfolio Pulse</h2>
+          <button id="openAssetModal" class="text-xs glass px-3 py-1 rounded-full border border-white/10 hover:border-white/20 transition">+ Add Asset</button>
+        </div>
+        <div class="glass rounded-2xl p-4 border border-white/10">
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-sm text-slate-200">Assets</p>
+            <span id="assetsTotal" class="text-xs text-emerald-300">$0</span>
+          </div>
+          <div id="assetList" class="space-y-2 text-sm"></div>
+        </div>
+        <div class="glass rounded-2xl p-4 border border-white/10">
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-sm text-slate-200">Liabilities</p>
+            <span id="liabilitiesTotal" class="text-xs text-rose-300">$0</span>
+          </div>
+          <div id="liabilityList" class="space-y-2 text-sm"></div>
+        </div>
+      </section>
+
+      <section id="advisor" data-section class="space-y-3 hidden">
+        <div class="glass rounded-2xl p-4 border border-white/10 flex items-center justify-between">
+          <div>
+            <p class="text-sm text-slate-200">Agentic AI Advisor</p>
+            <p class="text-xs text-slate-400">Guardian · Strategist · Analyst</p>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#d946ef] to-[#4f46e5] flex items-center justify-center text-white glow">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" d="M12 6a9 9 0 100 12 9 9 0 000-12zm0 0l3 3m-3-3l-3 3" />
+            </svg>
+          </div>
+        </div>
+        <div class="glass rounded-2xl p-4 border border-white/10 min-h-[240px]">
+          <div id="advisorStream" class="space-y-3 text-sm"></div>
+        </div>
+      </section>
+
+      <section id="history" data-section class="hidden">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-lg font-semibold text-white">Transactions</h2>
+          <button id="openTransactionModalTop" class="text-xs glass px-3 py-1 rounded-full border border-white/10 hover:border-white/20 transition">+ Log</button>
+        </div>
+        <div id="historyList" class="space-y-2"></div>
+      </section>
+    </main>
+
+    <nav class="glass border border-white/10 rounded-2xl fixed bottom-4 inset-x-4 max-w-md mx-auto px-3 py-2 flex items-center justify-between shadow-2xl">
+      <button class="nav-btn flex-1 py-2 flex flex-col items-center text-xs text-slate-300" data-target="home">
+        <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l9-9 9 9M4.5 10.5V21h15V10.5"/></svg>
+        Home
+      </button>
+      <button class="nav-btn flex-1 py-2 flex flex-col items-center text-xs text-slate-300" data-target="assets">
+        <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7h18M3 12h18M3 17h18"/></svg>
+        Assets
+      </button>
+      <button class="nav-btn flex-1 py-3 -mt-6 flex flex-col items-center text-xs text-white" data-target="advisor">
+        <div class="w-14 h-14 rounded-full bg-gradient-to-br from-[#d946ef] to-[#4f46e5] flex items-center justify-center shadow-lg glow mb-1">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v4m0 10v4m-7-7h4m6 0h4M5.5 5.5l3 3m7 7 3 3m0-13-3 3m-7 7-3 3"/></svg>
+        </div>
+        Advisor
+      </button>
+      <button class="nav-btn flex-1 py-2 flex flex-col items-center text-xs text-slate-300" data-target="history">
+        <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 4h14M7 8h10M9 12h6m-2 4H9m-4 4h14"/></svg>
+        History
+      </button>
+      <button class="nav-btn flex-1 py-2 flex flex-col items-center text-xs text-slate-300" data-target="add">
+        <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 5v14m7-7H5"/></svg>
+        Add
+      </button>
+    </nav>
+
+    <div id="transactionModal" class="fixed inset-0 z-40 flex items-end justify-center bg-black/50 hidden">
+      <div class="bottom-sheet glass w-full max-w-md mx-auto rounded-t-3xl p-5 border border-white/10">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-lg font-semibold text-white">Add Transaction</h3>
+          <button class="text-slate-400" data-close-transaction>&times;</button>
+        </div>
+        <form id="transactionForm" class="space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <label class="text-sm text-slate-300">Title
+              <input required name="title" class="w-full mt-1 glass rounded-xl px-3 py-2 border border-white/10 text-white bg-white/5" placeholder="Salary, Groceries" />
+            </label>
+            <label class="text-sm text-slate-300">Amount
+              <input required name="amount" type="number" step="0.01" class="w-full mt-1 glass rounded-xl px-3 py-2 border border-white/10 text-white bg-white/5" placeholder="1200" />
+            </label>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <label class="text-sm text-slate-300">Type
+              <select name="type" class="w-full mt-1 glass rounded-xl px-3 py-2 border border-white/10 text-white bg-white/5">
+                <option value="income">Income</option>
+                <option value="expense">Expense</option>
+              </select>
+            </label>
+            <label class="text-sm text-slate-300">Category
+              <input name="category" class="w-full mt-1 glass rounded-xl px-3 py-2 border border-white/10 text-white bg-white/5" placeholder="Salary, Food, Debt" />
+            </label>
+          </div>
+          <button class="w-full bg-gradient-to-r from-[#06b6d4] to-[#4f46e5] text-white font-semibold py-3 rounded-xl glow" type="submit">Save Transaction</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="assetModal" class="fixed inset-0 z-40 flex items-end justify-center bg-black/50 hidden">
+      <div class="bottom-sheet glass w-full max-w-md mx-auto rounded-t-3xl p-5 border border-white/10">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-lg font-semibold text-white">Add Asset / Liability</h3>
+          <button class="text-slate-400" data-close-asset>&times;</button>
+        </div>
+        <form id="assetForm" class="space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <label class="text-sm text-slate-300">Name
+              <input required name="name" class="w-full mt-1 glass rounded-xl px-3 py-2 border border-white/10 text-white bg-white/5" placeholder="Fund, Loan" />
+            </label>
+            <label class="text-sm text-slate-300">Value
+              <input required name="value" type="number" step="0.01" class="w-full mt-1 glass rounded-xl px-3 py-2 border border-white/10 text-white bg-white/5" placeholder="5000" />
+            </label>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <label class="text-sm text-slate-300">Type
+              <select name="kind" class="w-full mt-1 glass rounded-xl px-3 py-2 border border-white/10 text-white bg-white/5">
+                <option value="asset">Asset</option>
+                <option value="liability">Liability</option>
+              </select>
+            </label>
+            <label class="text-sm text-slate-300">Tag
+              <input name="tag" class="w-full mt-1 glass rounded-xl px-3 py-2 border border-white/10 text-white bg-white/5" placeholder="Cash, DeFi, Debt" />
+            </label>
+          </div>
+          <button class="w-full bg-gradient-to-r from-[#10b981] to-[#06b6d4] text-white font-semibold py-3 rounded-xl glow" type="submit">Save Entry</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = ''; // Example: 'http://localhost:4000' to use the Node/Express backend
+    const useApi = API_URL.length > 0;
+    const state = {
+      assets: [
+        { name: 'Crypto Portfolio', value: 42000, tag: 'DeFi', change: '+4.6%' },
+        { name: 'Cash Reserve', value: 15000, tag: 'Cash', change: '+0.2%' },
+        { name: 'Index Fund', value: 18000, tag: 'ETF', change: '+1.1%' }
+      ],
+      liabilities: [
+        { name: 'Car Loan', value: 12000, tag: 'Auto', change: '-0.3%' },
+        { name: 'Credit Card', value: 3500, tag: 'Revolving', change: '-0.1%' },
+        { name: 'Student Loan', value: 24000, tag: 'Education', change: '-0.2%' }
+      ],
+      transactions: [
+        { title: 'Salary Deposit', amount: 5200, type: 'income', category: 'Salary', date: '2024-04-01' },
+        { title: 'Food Expense', amount: -320, type: 'expense', category: 'Dining', date: '2024-04-02' },
+        { title: 'Car Loan Payment', amount: -420, type: 'expense', category: 'Debt', date: '2024-03-28' },
+        { title: 'Crypto Yield', amount: 280, type: 'income', category: 'Investments', date: '2024-03-27' },
+        { title: 'Groceries', amount: -180, type: 'expense', category: 'Living', date: '2024-03-26' }
+      ]
+    };
+
+    const sections = document.querySelectorAll('[data-section]');
+    const navButtons = document.querySelectorAll('.nav-btn');
+    const advisorStream = document.getElementById('advisorStream');
+    let activeSection = 'home';
+    let advisorTimer = null;
+
+    const api = async (path, options = {}) => {
+      const res = await fetch(`${API_URL}${path}`, {
+        headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+        ...options
+      });
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
+    };
+
+    async function syncFromApi() {
+      if (!useApi) return;
+      try {
+        const [assets, liabilities, transactions] = await Promise.all([
+          api('/assets'),
+          api('/liabilities'),
+          api('/transactions?limit=50')
+        ]);
+        state.assets = assets;
+        state.liabilities = liabilities;
+        state.transactions = transactions.map(t => ({ ...t, date: t.occurred_on || t.date }));
+      } catch (err) {
+        console.error('API sync failed, falling back to local state', err);
+      }
+    }
+
+    const formatCurrency = (v) => '$' + Number(v).toLocaleString(undefined, { minimumFractionDigits: 0 });
+    const calcTotals = () => {
+      const assetTotal = state.assets.reduce((sum, a) => sum + Number(a.value), 0);
+      const liabilityTotal = state.liabilities.reduce((sum, l) => sum + Number(l.value), 0);
+      const incomeTotal = state.transactions.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0);
+      const expenseTotal = state.transactions.filter(t => t.type === 'expense').reduce((s, t) => s + Math.abs(Number(t.amount)), 0);
+      const cash = state.assets.find(a => (a.tag || '').toLowerCase() === 'cash')?.value || 0;
+      return { assetTotal, liabilityTotal, netWorth: assetTotal - liabilityTotal, incomeTotal, expenseTotal, cash };
+    };
+
+    function renderDashboard() {
+      const { assetTotal, liabilityTotal, netWorth, incomeTotal, expenseTotal } = calcTotals();
+      document.getElementById('netWorth').textContent = formatCurrency(netWorth);
+      document.getElementById('assetTotal').textContent = formatCurrency(assetTotal);
+      document.getElementById('liabilityTotal').textContent = formatCurrency(liabilityTotal);
+      document.getElementById('incomeTotal').textContent = formatCurrency(incomeTotal);
+      document.getElementById('expenseTotal').textContent = formatCurrency(expenseTotal);
+
+      const recent = state.transactions.slice(0, 5).map(t => {
+        const color = t.type === 'income' ? 'text-emerald-300' : 'text-rose-300';
+        return `<div class="flex items-center justify-between glass rounded-xl px-3 py-2 border border-white/5">
+          <div>
+            <p class="text-slate-100">${t.title}</p>
+            <p class="text-xs text-slate-400">${t.category || 'General'} · ${t.date}</p>
+          </div>
+          <span class="${color} font-semibold">${t.type === 'income' ? '+' : '-'}${formatCurrency(Math.abs(t.amount))}</span>
+        </div>`;
+      }).join('');
+      document.getElementById('recentTransactions').innerHTML = recent || '<p class="text-slate-400 text-sm">No transactions yet.</p>';
+    }
+
+    function renderAssets() {
+      const assetTotal = state.assets.reduce((s, a) => s + Number(a.value), 0);
+      const liabilityTotal = state.liabilities.reduce((s, l) => s + Number(l.value), 0);
+      document.getElementById('assetsTotal').textContent = formatCurrency(assetTotal);
+      document.getElementById('liabilitiesTotal').textContent = formatCurrency(liabilityTotal);
+
+      const assetList = state.assets.map(a => `
+        <div class="glass rounded-xl px-3 py-2 border border-white/5 flex items-center justify-between">
+          <div>
+            <p class="text-slate-100">${a.name}</p>
+            <p class="text-xs text-slate-400">${a.tag || 'Asset'} · ${a.change || ''}</p>
+          </div>
+          <span class="text-emerald-300 font-semibold">${formatCurrency(a.value)}</span>
+        </div>
+      `).join('');
+      const liabilityList = state.liabilities.map(l => `
+        <div class="glass rounded-xl px-3 py-2 border border-white/5 flex items-center justify-between">
+          <div>
+            <p class="text-slate-100">${l.name}</p>
+            <p class="text-xs text-slate-400">${l.tag || 'Liability'} · ${l.change || ''}</p>
+          </div>
+          <span class="text-rose-300 font-semibold">-${formatCurrency(l.value)}</span>
+        </div>
+      `).join('');
+      document.getElementById('assetList').innerHTML = assetList || '<p class="text-slate-400 text-sm">Add your first asset.</p>';
+      document.getElementById('liabilityList').innerHTML = liabilityList || '<p class="text-slate-400 text-sm">Add a liability.</p>';
+    }
+
+    function renderHistory() {
+      const history = state.transactions.map(t => {
+        const color = t.type === 'income' ? 'text-emerald-300' : 'text-rose-300';
+        return `<div class="glass rounded-2xl p-3 border border-white/10 flex items-center justify-between">
+          <div>
+            <p class="text-sm text-white">${t.title}</p>
+            <p class="text-xs text-slate-400">${t.category || 'General'} · ${t.date}</p>
+          </div>
+          <span class="${color} font-semibold">${t.type === 'income' ? '+' : '-'}${formatCurrency(Math.abs(t.amount))}</span>
+        </div>`;
+      }).join('');
+      document.getElementById('historyList').innerHTML = history || '<p class="text-slate-400 text-sm">No history yet.</p>';
+    }
+
+    function renderAdvisor() {
+      advisorStream.innerHTML = '';
+      if (advisorTimer) clearTimeout(advisorTimer);
+      const { assetTotal, liabilityTotal, incomeTotal, expenseTotal, netWorth, cash } = calcTotals();
+      const debtRatio = liabilityTotal / Math.max(assetTotal, 1);
+      const insights = [];
+
+      if (debtRatio > 0.5) {
+        insights.push({ title: 'Guardian Protocol', tone: 'danger', message: `Debt load at ${(debtRatio * 100).toFixed(0)}% of assets. Prioritize crushing liabilities before taking on new risk.` });
+      }
+      if (cash > expenseTotal * 6) {
+        insights.push({ title: 'Strategist Protocol', tone: 'accent', message: `Cash reserve ${formatCurrency(cash)} covers ${Math.floor(cash / Math.max(expenseTotal, 1))} months. Deploy excess into higher-yield instruments.` });
+      }
+      const delta = incomeTotal - expenseTotal;
+      if (delta >= 0) {
+        insights.push({ title: 'Analyst Protocol', tone: 'success', message: `Income beats expenses by ${formatCurrency(delta)}. Channel the surplus into debt reduction and index exposure.` });
+      } else {
+        insights.push({ title: 'Analyst Protocol', tone: 'warn', message: `Expenses exceed income by ${formatCurrency(Math.abs(delta))}. Trim discretionary categories this week.` });
+      }
+      insights.push({ title: 'Pulse', tone: 'purple', message: `Net worth logged at ${formatCurrency(netWorth)}. Keep assets diversified across liquid and growth buckets.` });
+
+      const typing = document.createElement('div');
+      typing.className = 'flex items-center space-x-1 typing-dots mt-2';
+      typing.innerHTML = '<div></div><div></div><div></div><span class="text-xs text-slate-400 ml-2">Thinking...</span>';
+      advisorStream.appendChild(typing);
+
+      advisorTimer = setTimeout(() => {
+        advisorStream.innerHTML = insights.map(insight => {
+          const toneMap = {
+            danger: 'border-rose-400/70 shadow-[0_0_25px_rgba(239,68,68,0.35)]',
+            accent: 'border-cyan-400/70 shadow-[0_0_25px_rgba(6,182,212,0.35)]',
+            success: 'border-emerald-400/70 shadow-[0_0_25px_rgba(16,185,129,0.35)]',
+            warn: 'border-amber-400/70 shadow-[0_0_25px_rgba(251,191,36,0.35)]',
+            purple: 'border-fuchsia-400/70 shadow-[0_0_25px_rgba(217,70,239,0.35)]'
+          };
+          const border = toneMap[insight.tone] || toneMap.purple;
+          return `<div class="glass rounded-2xl p-3 border ${border} fade-in-up">
+            <div class="flex items-center justify-between mb-1">
+              <p class="text-xs uppercase tracking-[0.14em] text-white/70">${insight.title}</p>
+              <div class="w-2 h-2 rounded-full ${
+                insight.tone === 'danger' ? 'bg-rose-400' :
+                insight.tone === 'accent' ? 'bg-cyan-400' :
+                insight.tone === 'success' ? 'bg-emerald-400' :
+                insight.tone === 'warn' ? 'bg-amber-300' : 'bg-fuchsia-400'
+              }"></div>
+            </div>
+            <p class="text-slate-200 leading-relaxed">${insight.message}</p>
+          </div>`;
+        }).join('');
+      }, 900);
+    }
+
+    function switchSection(id) {
+      if (id === 'add') {
+        openTransactionModal();
+      } else {
+        activeSection = id;
+      }
+      const visible = activeSection;
+      sections.forEach(section => {
+        section.classList.toggle('hidden', section.id !== visible);
+      });
+      navButtons.forEach(btn => {
+        btn.classList.toggle('text-white', btn.dataset.target === visible);
+        btn.classList.toggle('text-slate-300', btn.dataset.target !== visible);
+      });
+      if (visible === 'advisor') renderAdvisor();
+    }
+
+    function openTransactionModal() {
+      const modal = document.getElementById('transactionModal');
+      modal.classList.remove('hidden');
+      setTimeout(() => modal.querySelector('.bottom-sheet').classList.remove('hidden'), 10);
+    }
+    function closeTransactionModal() {
+      const modal = document.getElementById('transactionModal');
+      modal.querySelector('.bottom-sheet').classList.add('hidden');
+      setTimeout(() => modal.classList.add('hidden'), 250);
+    }
+    function openAssetModal() {
+      const modal = document.getElementById('assetModal');
+      modal.classList.remove('hidden');
+      setTimeout(() => modal.querySelector('.bottom-sheet').classList.remove('hidden'), 10);
+    }
+    function closeAssetModal() {
+      const modal = document.getElementById('assetModal');
+      modal.querySelector('.bottom-sheet').classList.add('hidden');
+      setTimeout(() => modal.classList.add('hidden'), 250);
+    }
+
+    document.getElementById('transactionForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const title = form.title.value.trim();
+      const amount = Number(form.amount.value);
+      const type = form.type.value;
+      if (!title || !amount || !type) return;
+      const payload = {
+        title,
+        amount,
+        type,
+        category: form.category.value || 'General',
+        occurred_on: new Date().toISOString().slice(0, 10)
+      };
+      if (useApi) {
+        try {
+          await api('/transactions', { method: 'POST', body: JSON.stringify(payload) });
+          await syncFromApi();
+        } catch (err) {
+          console.error('Failed to save transaction via API', err);
+        }
+      } else {
+        const signedAmount = type === 'income' ? Math.abs(amount) : -Math.abs(amount);
+        state.transactions.unshift({
+          title,
+          amount: signedAmount,
+          type,
+          category: payload.category,
+          date: payload.occurred_on
+        });
+      }
+      form.reset();
+      closeTransactionModal();
+      renderDashboard();
+      renderHistory();
+      renderAdvisor();
+    });
+
+    document.getElementById('assetForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const entry = {
+        name: form.name.value.trim(),
+        value: Number(form.value.value),
+        tag: form.tag.value || ''
+      };
+      if (!entry.name || !entry.value) return;
+      if (useApi) {
+        try {
+          const path = form.kind.value === 'asset' ? '/assets' : '/liabilities';
+          await api(path, { method: 'POST', body: JSON.stringify(entry) });
+          await syncFromApi();
+        } catch (err) {
+          console.error('Failed to save entry via API', err);
+        }
+      } else {
+        if (form.kind.value === 'asset') {
+          state.assets.push(entry);
+        } else {
+          state.liabilities.push(entry);
+        }
+      }
+      form.reset();
+      closeAssetModal();
+      renderAssets();
+      renderDashboard();
+      renderAdvisor();
+    });
+
+    document.querySelectorAll('[data-close-transaction]').forEach(btn => btn.addEventListener('click', closeTransactionModal));
+    document.querySelectorAll('[data-close-asset]').forEach(btn => btn.addEventListener('click', closeAssetModal));
+    document.getElementById('openAssetModal').addEventListener('click', openAssetModal);
+    document.getElementById('openTransactionModalTop').addEventListener('click', openTransactionModal);
+
+    document.getElementById('transactionModal').addEventListener('click', (e) => { if (e.target.id === 'transactionModal') closeTransactionModal(); });
+    document.getElementById('assetModal').addEventListener('click', (e) => { if (e.target.id === 'assetModal') closeAssetModal(); });
+
+    navButtons.forEach(btn => btn.addEventListener('click', () => switchSection(btn.dataset.target)));
+
+    async function bootstrap() {
+      if (useApi) {
+        await syncFromApi();
+      }
+      renderDashboard();
+      renderAssets();
+      renderHistory();
+      renderAdvisor();
+    }
+
+    bootstrap();
+  </script>
+</body>
+</html>

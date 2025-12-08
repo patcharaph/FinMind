@@ -1,0 +1,22 @@
+# OS / Editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Node / build artifacts (เผื่อใช้เครื่องมือเสริม)
+node_modules/
+dist/
+out/
+coverage/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Env / cache
+.env
+.env.local
+.cache/
