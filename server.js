@@ -6,9 +6,13 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import pkg from "pg";
+import path from "path";
+import { fileURLToPath } from "url";
 
 dotenv.config();
 const { Pool } = pkg;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -23,6 +27,10 @@ app.use(
   })
 );
 app.use(express.json());
+app.use(express.static(__dirname));
+app.get("/", (_req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
+});
 
 // --- DB setup (optional) ---
 const useDb = !!process.env.DATABASE_URL;
