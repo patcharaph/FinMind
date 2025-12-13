@@ -51,6 +51,7 @@ Use this when you want persistence and to wrap the app for App Store/Play submis
 ### Requirements
 - Node 18+
 - Postgres (or leave `DATABASE_URL` unset to run in-memory)
+ - JWT_SECRET for auth (dev fallback is set but change in production)
 
 ### Setup
 ```bash
@@ -63,10 +64,35 @@ PORT=4000
 DATABASE_URL=postgres://user:pass@host:5432/finmind
 # PGSSLMODE=disable  # uncomment if your Postgres doesn't need SSL
 CORS_ORIGINS=*
+JWT_SECRET=change_me_for_prod
+FINMIND_USE_DB=true
+# Optional LLM for advisor:
+# LLM_PROVIDER=openai        # or openrouter
+# LLM_API_KEY=your_key       # OPENAI or OPENROUTER key
+# ADVISOR_LLM_MODEL=gpt-4.1-mini    # for OpenAI (default)
+# ADVISOR_LLM_MODEL=openrouter/openai/gpt-4o-mini   # example for OpenRouter
+# OPENROUTER_REFERRER=https://finmind.app
+# OPENROUTER_TITLE=FinMind Advisor
+ALLOW_DEV_HEADER=false  # do not allow x-user-id fallback in production
 ```
 
 Initialize tables (if you want to run manually): `psql "$DATABASE_URL" -f schema.sql`  
 The server also auto-creates tables at startup if `DATABASE_URL` is set.
+
+Postgres setup quickstart (local)
+- Install PostgreSQL with “Command Line Tools” (psql). Ensure `psql --version` works; add `C:\Program Files\PostgreSQL\18\bin` to PATH if needed.
+- Create user/db:
+  ```bash
+  psql -U postgres -h localhost -c "CREATE USER finmind WITH PASSWORD 'yourpassword';"
+  psql -U postgres -h localhost -c "CREATE DATABASE finmind OWNER finmind;"
+  ```
+- Set `DATABASE_URL=postgres://finmind:yourpassword@localhost:5432/finmind`
+- If you forget the postgres password: temporarily change `pg_hba.conf` local entries to `trust`, restart service, run `ALTER USER postgres WITH PASSWORD 'newpass';` then revert `pg_hba.conf` to `scram-sha-256` and restart again.
+
+Environment notes (prod-ready)
+- Use `FINMIND_USE_DB=true`, `ALLOW_DEV_HEADER=false`, set `JWT_SECRET` to a strong random string.
+- Set `CORS_ORIGINS` to your real domain(s).
+- Provide LLM credentials: `LLM_PROVIDER=openai|openrouter`, `LLM_API_KEY` (or `OPENROUTER_API_KEY`), and choose a model (e.g., `gpt-4.1-mini` or `openrouter/openai/gpt-4o-mini`).
 
 ### Run
 ```bash
@@ -77,12 +103,21 @@ npm run dev
 
 API base URL defaults to `http://localhost:4000`. Set `API_URL` in `index.html` to match.
 
+### Auth
+- `POST /auth/signup` – body: `{ email, password, display_name?, plan? }` → returns `{ token, user }`
+- `POST /auth/login` – body: `{ email, password }` → returns `{ token, user }`
+- `GET /me` – auth required (Bearer)
+- Auth header: `Authorization: Bearer <token>`
+- Dev header `x-user-id` is **disabled by default**; set `ALLOW_DEV_HEADER=true` only for local testing.
+- In-memory demo user (dev): `demo@finmind.ai` / `demo123`
+
 ### Endpoints (minimal)
 - `GET /health` – status + whether DB is enabled
 - `GET /summary` – totals for assets, liabilities, net worth, income, expenses
 - `GET/POST /assets`
 - `GET/POST /liabilities`
 - `GET/POST /transactions` (`?limit=50` default)
+- `GET /advisor/insights` – financial metrics + rule-based insights + optional LLM advice
 
 Headers: `x-user-id` (demo auth, defaults to 1).  
 Body: JSON; `Content-Type: application/json`.
@@ -90,3 +125,64 @@ Body: JSON; `Content-Type: application/json`.
 ### Notes
 - If `DATABASE_URL` is missing, API serves/updates in-memory demo data.
 - Wrap as PWA + Capacitor/TWA for App Store/Play; point mobile build to the same API base URL.
+
+### Advisor Insights
+- Endpoint: `GET /advisor/insights`
+- Query params:
+  - `period` (optional): `last_30d` | `last_90d` | `ytd` | `all` (any other value = no date filter)
+  - `lang` (optional): `en` (default) | `th`
+- Response:
+```json
+{
+  "period": "last_90d",
+  "lang": "en",
+  "metrics": {
+    "assetTotal": 75000,
+    "liabilityTotal": 39500,
+    "netWorth": 35500,
+    "debtToAssetRatio": 0.53,
+    "totalIncome": 5200,
+    "totalExpense": 920,
+    "savingsAmount": 4280,
+    "savingsRate": 0.82,
+    "expenseByCategory": { "Dining": 320, "Debt": 420, "Living": 180 },
+    "averageDailyExpense": 10.2,
+    "monthlyBurn": 306,
+    "transactionCount": 5
+  },
+  "rules": [
+    {
+      "id": "debt-ratio-warning",
+      "severity": "warning",
+      "title": "High leverage",
+      "message": "Debt-to-asset ratio is above 50%. Consider reducing liabilities or increasing assets.",
+      "tags": ["debt"]
+    }
+  ],
+  "llm_advice": null
+}
+```
+- LLM (optional): set `LLM_API_KEY` and `LLM_PROVIDER=openai` (default) plus `ADVISOR_LLM_MODEL` (defaults to `gpt-4.1-mini`). If no key is set, `llm_advice` is `null`.
+
+Examples:
+- Curl: `curl "http://localhost:4000/advisor/insights?period=last_90d&lang=en" -H "Authorization: Bearer <token>"`
+- HTTPie: `http :4000/advisor/insights period==last_90d lang==th Authorization:"Bearer <token>"`
+
+### Frontend (showing insights)
+- Call `/advisor/insights` once after loading data, then display `metrics` and `rules`.
+- Use `rules` for badges/alerts; show `llm_advice` as a short paragraph when available.
+
+### PWA / Mobile packaging
+- PWA assets: `manifest.webmanifest`, `service-worker.js` (cache-first fallback), `preview.svg` as temporary icon.
+- Register service worker on load; update icons with proper PNGs before store submission.
+- For native store shells, wrap with Capacitor/TWA and ensure HTTPS + JWT auth (no `x-user-id` fallback).
+
+### Tests / CI
+- Unit + API (in-memory): `npm test`
+- Lint: `npm run lint`
+- Postgres integration test: set `TEST_DATABASE_URL` then `npm test` (skips if not set).
+- CI (GitHub Actions): see `.github/workflows/ci.yml` for lint + test.
+
+### Policies
+- Privacy: see `PRIVACY.md`
+- Terms: see `TERMS.md`

@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FinMind: Agentic Wealth Tracker</title>
+  <meta name="theme-color" content="#050b14" />
+  <link rel="manifest" href="/manifest.webmanifest" />
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root {
@@ -369,7 +371,7 @@
   </div>
 
   <script>
-    const API_URL = ''; // Example: 'http://localhost:4000' to use the Node/Express backend
+    const API_URL = 'http://localhost:4001'; // Backend API base
     const useApi = API_URL.length > 0;
     let isPrime = false;
     let paywallReason = 'Experience full AI wealth intelligence, premium visuals, and unlimited growth.';
@@ -741,6 +743,12 @@
     }
 
     bootstrap();
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js').catch((err) => console.warn('SW registration failed', err));
+      });
+    }
   </script>
 </body>
 </html>

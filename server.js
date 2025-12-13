@@ -8,15 +8,20 @@ import dotenv from "dotenv";
 import pkg from "pg";
 import path from "path";
 import { fileURLToPath } from "url";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { computeMetrics, evaluateRules, generateAdvisorAdvice } from "./advisor.js";
 
 dotenv.config();
 const { Pool } = pkg;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const app = express();
+export const app = express();
 const port = process.env.PORT || 4000;
 const allowOrigins = process.env.CORS_ORIGINS?.split(",").map((o) => o.trim()) || ["*"];
+const allowDevHeader = process.env.ALLOW_DEV_HEADER === "true";
+const jwtSecret = process.env.JWT_SECRET || "dev-secret-change-me";
 
 app.use(
   cors({
@@ -33,7 +38,7 @@ app.get("/", (_req, res) => {
 });
 
 // --- DB setup (optional) ---
-const useDb = !!process.env.DATABASE_URL;
+const useDb = !!process.env.DATABASE_URL && process.env.FINMIND_USE_DB !== "false";
 const pool = useDb
   ? new Pool({
       connectionString: process.env.DATABASE_URL,
@@ -48,8 +53,12 @@ async function initDb() {
       id SERIAL PRIMARY KEY,
       email TEXT UNIQUE,
       display_name TEXT,
+      plan TEXT DEFAULT 'free',
+      password_hash TEXT,
       created_at TIMESTAMPTZ DEFAULT now()
     );
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS plan TEXT DEFAULT 'free';
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
     CREATE TABLE IF NOT EXISTS assets (
       id SERIAL PRIMARY KEY,
       user_id INT REFERENCES users(id) ON DELETE CASCADE,
@@ -82,7 +91,16 @@ async function initDb() {
 
 // --- In-memory fallback ---
 const memory = {
-  user: { id: 1, email: "demo@finmind.ai", display_name: "Demo User" },
+  users: [
+    {
+      id: 1,
+      email: "demo@finmind.ai",
+      display_name: "Demo User",
+      plan: "free",
+      password_hash: bcrypt.hashSync("demo123", 8),
+      created_at: new Date().toISOString(),
+    },
+  ],
   assets: [
     { id: 1, name: "Crypto Portfolio", value: 42000, tag: "DeFi", user_id: 1 },
     { id: 2, name: "Cash Reserve", value: 15000, tag: "Cash", user_id: 1 },
@@ -102,13 +120,100 @@ const memory = {
   ],
 };
 
-function auth(req, _res, next) {
-  // Demo auth: use header x-user-id or default to 1
-  req.userId = Number(req.headers["x-user-id"] || 1);
-  next();
+// --- User helpers ---
+async function getUserById(id) {
+  if (!useDb) {
+    const u = memory.users.find((u) => u.id === id);
+    return u ? { id: u.id, email: u.email, display_name: u.display_name, plan: u.plan || "free" } : null;
+  }
+  const { rows } = await pool.query("SELECT id, email, display_name, plan FROM users WHERE id = $1", [id]);
+  return rows[0] || null;
+}
+
+async function getUserWithPassword(email) {
+  if (!useDb) {
+    const u = memory.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+    return u || null;
+  }
+  const { rows } = await pool.query("SELECT * FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1", [email]);
+  return rows[0] || null;
+}
+
+async function createUser({ email, password, display_name, plan = "free" }) {
+  const password_hash = await bcrypt.hash(password, 10);
+  if (!useDb) {
+    const exists = memory.users.some((u) => u.email.toLowerCase() === email.toLowerCase());
+    if (exists) throw new Error("Email already exists");
+    const id = memory.users.length + 1;
+    const user = { id, email, display_name, plan, password_hash, created_at: new Date().toISOString() };
+    memory.users.push(user);
+    return { id, email, display_name, plan };
+  }
+  const { rows } = await pool.query(
+    "INSERT INTO users (email, display_name, plan, password_hash) VALUES ($1,$2,$3,$4) RETURNING id, email, display_name, plan",
+    [email, display_name, plan, password_hash]
+  );
+  return rows[0];
+}
+
+function signToken(user) {
+  return jwt.sign({ sub: user.id, plan: user.plan || "free" }, jwtSecret, { expiresIn: "7d" });
+}
+
+function auth(req, res, next) {
+  const authHeader = req.headers["authorization"];
+  if (authHeader?.startsWith("Bearer ")) {
+    const token = authHeader.slice("Bearer ".length);
+    try {
+      const payload = jwt.verify(token, jwtSecret);
+      req.userId = payload.sub;
+      req.userPlan = payload.plan || "free";
+      return next();
+    } catch {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+  }
+
+  // Optional dev override if explicitly enabled
+  if (allowDevHeader && req.headers["x-user-id"]) {
+    const fallbackId = Number(req.headers["x-user-id"]);
+    if (Number.isNaN(fallbackId)) return res.status(401).json({ error: "Unauthorized" });
+    req.userId = fallbackId;
+    const user = memory.users.find((u) => u.id === req.userId);
+    req.userPlan = user?.plan || "free";
+    return next();
+  }
+
+  return res.status(401).json({ error: "Unauthorized" });
 }
 
 app.get("/health", (_req, res) => res.json({ ok: true, useDb }));
+
+app.post("/auth/signup", async (req, res) => {
+  const { email, password, display_name, plan } = req.body || {};
+  if (!email || !password) return res.status(400).json({ error: "email and password required" });
+  try {
+    const existing = await getUserWithPassword(email);
+    if (existing) return res.status(400).json({ error: "email already registered" });
+    const user = await createUser({ email, password, display_name, plan: plan || "free" });
+    const token = signToken(user);
+    res.json({ token, user });
+  } catch (err) {
+    res.status(400).json({ error: err.message || "signup failed" });
+  }
+});
+
+app.post("/auth/login", async (req, res) => {
+  const { email, password } = req.body || {};
+  if (!email || !password) return res.status(400).json({ error: "email and password required" });
+  const user = await getUserWithPassword(email);
+  if (!user || !user.password_hash) return res.status(401).json({ error: "invalid credentials" });
+  const ok = await bcrypt.compare(password, user.password_hash);
+  if (!ok) return res.status(401).json({ error: "invalid credentials" });
+  const safeUser = { id: user.id, email: user.email, display_name: user.display_name, plan: user.plan || "free" };
+  const token = signToken(safeUser);
+  res.json({ token, user: safeUser });
+});
 
 app.use(auth);
 
@@ -133,6 +238,13 @@ async function listTransactions(userId, limit = 50) {
 }
 
 // --- Routes ---
+app.get("/me", async (req, res) => {
+  if (!req.userId) return res.status(401).json({ error: "Unauthorized" });
+  const user = await getUserById(req.userId);
+  if (!user) return res.status(404).json({ error: "User not found" });
+  res.json(user);
+});
+
 app.get("/summary", async (req, res) => {
   const userId = req.userId;
   const assets = await listAssets(userId);
@@ -227,12 +339,40 @@ app.post("/transactions", async (req, res) => {
   res.json(rows[0]);
 });
 
+// --- Advisor Insights ---
+app.get("/advisor/insights", async (req, res) => {
+  const period = typeof req.query.period === "string" ? req.query.period : "last_90d";
+  const lang = typeof req.query.lang === "string" ? req.query.lang : "en";
+  const userId = req.userId;
+
+  const [assets, liabilities, transactions] = await Promise.all([
+    listAssets(userId),
+    listLiabilities(userId),
+    listTransactions(userId, 500),
+  ]);
+
+  const metrics = computeMetrics(assets, liabilities, transactions, period);
+  const rules = evaluateRules(metrics);
+  const llmAdvice = await generateAdvisorAdvice(metrics, rules, lang);
+
+  res.json({
+    period,
+    lang,
+    metrics,
+    rules,
+    llm_advice: llmAdvice,
+  });
+});
+
 // --- Start ---
-initDb()
-  .then(() => {
-    app.listen(port, () => console.log(`FinMind API running on :${port} (useDb=${useDb})`));
-  })
-  .catch((err) => {
+export async function start() {
+  await initDb();
+  return app.listen(port, () => console.log(`FinMind API running on :${port} (useDb=${useDb})`));
+}
+
+if (process.env.NODE_ENV !== "test") {
+  start().catch((err) => {
     console.error("DB init failed", err);
     process.exit(1);
   });
+}
