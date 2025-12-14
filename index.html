@@ -117,6 +117,14 @@
       0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
       40% { transform: translateY(-4px); opacity: 1; }
     }
+    .dark-select {
+      background-color: rgba(20, 24, 36, 0.8);
+      color: #e5e7eb;
+    }
+    .dark-select option {
+      background-color: #0b0f1a;
+      color: #e5e7eb;
+    }
   </style>
 </head>
 <body class="antialiased">
@@ -126,8 +134,14 @@
         <p class="text-sm text-slate-400">Welcome back,</p>
         <h1 class="text-2xl font-semibold text-white">Aurora Reyes</h1>
       </div>
-      <div id="tierBadge" class="glass rounded-full px-3 py-1 text-xs uppercase tracking-[0.14em] text-slate-200 border border-white/10">
-        FinMind v1.0
+      <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2">
+          <button id="authButton" class="text-xs text-slate-200 px-3 py-1 rounded-full border border-white/10 glass hover:border-white/20 transition">Sign In</button>
+          <button id="signOutButton" class="text-xs text-slate-300 px-3 py-1 rounded-full border border-white/10 glass hover:border-white/20 transition hidden">Sign Out</button>
+        </div>
+        <div id="tierBadge" class="glass rounded-full px-3 py-1 text-xs uppercase tracking-[0.14em] text-slate-200 border border-white/10">
+          FinMind v1.0
+        </div>
       </div>
     </header>
 
@@ -193,9 +207,9 @@
       </section>
 
       <section id="assets" data-section class="space-y-4 hidden">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between gap-2">
           <h2 class="text-lg font-semibold text-white">Portfolio Pulse</h2>
-          <button id="openAssetModal" class="text-xs glass px-3 py-1 rounded-full border border-white/10 hover:border-white/20 transition">+ Add Asset</button>
+          <button id="openAssetModal" class="text-xs glass px-3 py-1 rounded-full border border-white/10 hover:border-white/20 transition">+ Add</button>
         </div>
         <div class="glass rounded-2xl p-4 border border-white/10">
           <div class="flex items-center justify-between mb-2">
@@ -287,7 +301,7 @@
           </div>
           <div class="grid grid-cols-2 gap-3">
             <label class="text-sm text-slate-300">Type
-              <select name="type" class="w-full mt-1 glass rounded-xl px-3 py-2 border border-white/10 text-white bg-white/5">
+              <select name="type" class="w-full mt-1 glass dark-select rounded-xl px-3 py-2 border border-white/10 text-white bg-white/5">
                 <option value="income">Income</option>
                 <option value="expense">Expense</option>
               </select>
@@ -318,7 +332,7 @@
           </div>
           <div class="grid grid-cols-2 gap-3">
             <label class="text-sm text-slate-300">Type
-              <select name="kind" class="w-full mt-1 glass rounded-xl px-3 py-2 border border-white/10 text-white bg-white/5">
+              <select name="kind" id="kindSelect" class="w-full mt-1 glass dark-select rounded-xl px-3 py-2 border border-white/10 text-white bg-white/10 uppercase tracking-[0.08em]">
                 <option value="asset">Asset</option>
                 <option value="liability">Liability</option>
               </select>
@@ -368,12 +382,43 @@
         </div>
       </div>
     </div>
+
+    <div id="authModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden">
+      <div class="prime-border w-full max-w-md mx-auto">
+        <div class="prime-card p-6 relative">
+          <button id="closeAuth" class="absolute top-3 right-3 text-slate-400 hover:text-white transition">&times;</button>
+          <div class="space-y-4">
+            <div class="text-center space-y-1">
+              <p class="text-xs uppercase tracking-[0.2em] text-fuchsia-300">Authentication</p>
+              <h3 class="text-xl font-semibold text-white">Sign in to sync</h3>
+              <p class="text-slate-300 text-sm">Use your API credentials to load/save data. Demo stays local.</p>
+              <p id="authError" class="text-rose-300 text-sm hidden"></p>
+            </div>
+            <form id="loginForm" class="space-y-3">
+              <label class="text-sm text-slate-300 block">Email
+                <input required name="email" type="email" class="w-full mt-1 glass rounded-xl px-3 py-2 border border-white/10 text-white bg-white/5" placeholder="you@email.com" />
+              </label>
+              <label class="text-sm text-slate-300 block">Password
+                <input required name="password" type="password" class="w-full mt-1 glass rounded-xl px-3 py-2 border border-white/10 text-white bg-white/5" placeholder="••••••••" />
+              </label>
+              <button class="w-full bg-gradient-to-r from-[#d946ef] via-[#7c3aed] to-[#06b6d4] text-white font-semibold py-3 rounded-xl prime-cta" type="submit">Sign In</button>
+              <p class="text-xs text-slate-400 text-center">Need an account? Use /auth/signup via API first.</p>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
-    const API_URL = 'http://localhost:4001'; // Backend API base
-    const useApi = API_URL.length > 0;
-    let isPrime = false;
+    // Set API_URL to '' when running the standalone file (file://) to avoid failed fetches.
+    // Point it to your backend (e.g., http://localhost:4001) when the server is running.
+    const API_URL = ''; // Backend API base
+    const useApi = API_URL.startsWith('http');
+    let authToken = localStorage.getItem('finmind_token') || '';
+    let currentUser = null;
+    try { currentUser = JSON.parse(localStorage.getItem('finmind_user') || 'null'); } catch { currentUser = null; }
+    let isPrime = currentUser?.plan === 'prime';
     let paywallReason = 'Experience full AI wealth intelligence, premium visuals, and unlimited growth.';
     const state = {
       assets: [
@@ -399,16 +444,31 @@
     const advisorStream = document.getElementById('advisorStream');
     const advisorLock = document.getElementById('advisorLock');
     const paywallModal = document.getElementById('paywallModal');
+    const authModal = document.getElementById('authModal');
+    const authErrorEl = document.getElementById('authError');
     const paywallMessageEl = document.getElementById('paywallMessage');
     const tierBadge = document.getElementById('tierBadge');
+    const authButton = document.getElementById('authButton');
+    const signOutButton = document.getElementById('signOutButton');
     let activeSection = 'home';
     let advisorTimer = null;
+    let editingAsset = null; // { kind: 'asset'|'liability', index: number }
+    let editingTransaction = null; // number index in state.transactions
 
     const api = async (path, options = {}) => {
       const res = await fetch(`${API_URL}${path}`, {
-        headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(options.headers || {}),
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {})
+        },
         ...options
       });
+      if (res.status === 401) {
+        setAuth('', null);
+        openAuthModal();
+        throw new Error('Unauthorized');
+      }
       if (!res.ok) throw new Error(await res.text());
       return res.json();
     };
@@ -426,6 +486,20 @@
         state.transactions = transactions.map(t => ({ ...t, date: t.occurred_on || t.date }));
       } catch (err) {
         console.error('API sync failed, falling back to local state', err);
+        if ((err.message || '').toLowerCase().includes('unauthorized')) {
+          setAuth('', null);
+          openAuthModal();
+        }
+      }
+    }
+
+    async function hydrateUser() {
+      if (!useApi || !authToken) return;
+      try {
+        const user = await api('/me');
+        setAuth(authToken, user);
+      } catch (err) {
+        console.error('Failed to fetch user profile', err);
       }
     }
 
@@ -465,6 +539,54 @@
       renderAdvisor();
     }
 
+    function setAuth(token, user) {
+      authToken = token || '';
+      currentUser = user || null;
+      if (token && user) {
+        localStorage.setItem('finmind_token', token);
+        localStorage.setItem('finmind_user', JSON.stringify(user));
+      } else {
+        localStorage.removeItem('finmind_token');
+        localStorage.removeItem('finmind_user');
+      }
+      isPrime = currentUser?.plan === 'prime';
+      setPrimeVisuals();
+      updateAuthButton();
+      updateSignOutVisibility();
+    }
+
+    function updateAuthButton() {
+      if (!authButton) return;
+      if (authToken && currentUser) {
+        authButton.textContent = currentUser.display_name || currentUser.email || 'Signed In';
+        authButton.classList.add('border-emerald-400/60', 'text-emerald-200');
+      } else {
+        authButton.textContent = 'Sign In';
+        authButton.classList.remove('border-emerald-400/60', 'text-emerald-200');
+      }
+    }
+
+    function updateSignOutVisibility() {
+      if (!signOutButton) return;
+      signOutButton.classList.toggle('hidden', !(authToken && currentUser));
+    }
+
+    function openAuthModal() {
+      if (!useApi) {
+        if (authErrorEl) {
+          authErrorEl.textContent = 'Set API_URL to your backend (e.g., http://localhost:4001) to enable sign in.';
+          authErrorEl.classList.remove('hidden');
+        }
+        return;
+      }
+      authErrorEl?.classList.add('hidden');
+      authModal.classList.remove('hidden');
+    }
+    function closeAuthModal() {
+      authModal.classList.add('hidden');
+    }
+
+
     const formatCurrency = (v) => '$' + Number(v).toLocaleString(undefined, { minimumFractionDigits: 0 });
     const calcTotals = () => {
       const assetTotal = state.assets.reduce((sum, a) => sum + Number(a.value), 0);
@@ -502,22 +624,30 @@
       document.getElementById('assetsTotal').textContent = formatCurrency(assetTotal);
       document.getElementById('liabilitiesTotal').textContent = formatCurrency(liabilityTotal);
 
-      const assetList = state.assets.map(a => `
-        <div class="glass rounded-xl px-3 py-2 border border-white/5 flex items-center justify-between">
-          <div>
-            <p class="text-slate-100">${a.name}</p>
-            <p class="text-xs text-slate-400">${a.tag || 'Asset'} · ${a.change || ''}</p>
+      const assetList = state.assets.map((a, idx) => `
+        <div class="glass rounded-xl px-3 py-2 border border-white/5 flex items-center justify-between gap-3">
+          <div class="min-w-0">
+            <p class="text-slate-100 truncate">${a.name}</p>
+            <p class="text-xs text-slate-400 truncate">${a.tag || 'Asset'} · ${a.change || ''}</p>
           </div>
-          <span class="text-emerald-300 font-semibold">${formatCurrency(a.value)}</span>
+          <div class="flex items-center gap-2 shrink-0">
+            <span class="text-emerald-300 font-semibold">${formatCurrency(a.value)}</span>
+            <button class="text-xs text-slate-300 hover:text-white" data-action="edit-asset" data-kind="asset" data-index="${idx}">Edit</button>
+            <button class="text-xs text-rose-300 hover:text-rose-100" data-action="delete-asset" data-kind="asset" data-index="${idx}">Del</button>
+          </div>
         </div>
       `).join('');
-      const liabilityList = state.liabilities.map(l => `
-        <div class="glass rounded-xl px-3 py-2 border border-white/5 flex items-center justify-between">
-          <div>
-            <p class="text-slate-100">${l.name}</p>
-            <p class="text-xs text-slate-400">${l.tag || 'Liability'} · ${l.change || ''}</p>
+      const liabilityList = state.liabilities.map((l, idx) => `
+        <div class="glass rounded-xl px-3 py-2 border border-white/5 flex items-center justify-between gap-3">
+          <div class="min-w-0">
+            <p class="text-slate-100 truncate">${l.name}</p>
+            <p class="text-xs text-slate-400 truncate">${l.tag || 'Liability'} · ${l.change || ''}</p>
           </div>
-          <span class="text-rose-300 font-semibold">-${formatCurrency(l.value)}</span>
+          <div class="flex items-center gap-2 shrink-0">
+            <span class="text-rose-300 font-semibold">-${formatCurrency(l.value)}</span>
+            <button class="text-xs text-slate-300 hover:text-white" data-action="edit-asset" data-kind="liability" data-index="${idx}">Edit</button>
+            <button class="text-xs text-rose-300 hover:text-rose-100" data-action="delete-asset" data-kind="liability" data-index="${idx}">Del</button>
+          </div>
         </div>
       `).join('');
       document.getElementById('assetList').innerHTML = assetList || '<p class="text-slate-400 text-sm">Add your first asset.</p>';
@@ -525,14 +655,18 @@
     }
 
     function renderHistory() {
-      const history = state.transactions.map(t => {
+      const history = state.transactions.map((t, idx) => {
         const color = t.type === 'income' ? 'text-emerald-300' : 'text-rose-300';
-        return `<div class="glass rounded-2xl p-3 border border-white/10 flex items-center justify-between">
-          <div>
-            <p class="text-sm text-white">${t.title}</p>
-            <p class="text-xs text-slate-400">${t.category || 'General'} · ${t.date}</p>
+        return `<div class="glass rounded-2xl p-3 border border-white/10 flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <p class="text-sm text-white truncate">${t.title}</p>
+            <p class="text-xs text-slate-400 truncate">${t.category || 'General'} · ${t.date}</p>
           </div>
-          <span class="${color} font-semibold">${t.type === 'income' ? '+' : '-'}${formatCurrency(Math.abs(t.amount))}</span>
+          <div class="flex items-center gap-2 shrink-0">
+            <span class="${color} font-semibold">${t.type === 'income' ? '+' : '-'}${formatCurrency(Math.abs(t.amount))}</span>
+            <button class="text-xs text-slate-300 hover:text-white" data-action="edit-transaction" data-index="${idx}">Edit</button>
+            <button class="text-xs text-rose-300 hover:text-rose-100" data-action="delete-transaction" data-index="${idx}">Del</button>
+          </div>
         </div>`;
       }).join('');
       document.getElementById('historyList').innerHTML = history || '<p class="text-slate-400 text-sm">No history yet.</p>';
@@ -622,8 +756,21 @@
       if (visible === 'advisor') renderAdvisor();
     }
 
-    function openTransactionModal() {
+    function openTransactionModal(editIndex = null) {
       const modal = document.getElementById('transactionModal');
+      editingTransaction = editIndex;
+      const form = document.getElementById('transactionForm');
+      const titleEl = modal.querySelector('h3');
+      if (titleEl) titleEl.textContent = editingTransaction !== null ? 'Edit Transaction' : 'Add Transaction';
+      if (editingTransaction !== null) {
+        const t = state.transactions[editingTransaction];
+        form.title.value = t.title || '';
+        form.amount.value = Math.abs(t.amount);
+        form.type.value = t.type;
+        form.category.value = t.category || '';
+      } else {
+        form.reset();
+      }
       modal.classList.remove('hidden');
       setTimeout(() => modal.querySelector('.bottom-sheet').classList.remove('hidden'), 10);
     }
@@ -631,9 +778,39 @@
       const modal = document.getElementById('transactionModal');
       modal.querySelector('.bottom-sheet').classList.add('hidden');
       setTimeout(() => modal.classList.add('hidden'), 250);
+      editingTransaction = null;
     }
-    function openAssetModal() {
+    function styleKindSelect() {
+      const select = document.getElementById('kindSelect');
+      if (!select) return;
+      const isAsset = select.value === 'asset';
+      select.classList.toggle('border-emerald-400/70', isAsset);
+      select.classList.toggle('border-rose-400/70', !isAsset);
+      select.classList.toggle('text-emerald-200', isAsset);
+      select.classList.toggle('text-rose-200', !isAsset);
+      select.classList.toggle('bg-emerald-500/10', isAsset);
+      select.classList.toggle('bg-rose-500/10', !isAsset);
+    }
+
+    function openAssetModal(kind = 'asset', editIndex = null) {
       const modal = document.getElementById('assetModal');
+      editingAsset = editIndex !== null ? { kind, index: editIndex } : null;
+      const form = document.getElementById('assetForm');
+      const titleEl = modal.querySelector('h3');
+      form.kind.value = kind;
+      if (editingAsset) {
+        const entry = kind === 'asset' ? state.assets[editIndex] : state.liabilities[editIndex];
+        if (titleEl) titleEl.textContent = `Edit ${kind === 'asset' ? 'Asset' : 'Liability'}`;
+        form.name.value = entry.name || '';
+        form.value.value = entry.value;
+        form.tag.value = entry.tag || '';
+      } else {
+        if (titleEl) titleEl.textContent = 'Add Asset / Liability';
+        form.reset();
+        form.kind.value = kind;
+      }
+      styleKindSelect();
+      form.kind.addEventListener('change', styleKindSelect);
       modal.classList.remove('hidden');
       setTimeout(() => modal.querySelector('.bottom-sheet').classList.remove('hidden'), 10);
     }
@@ -641,6 +818,31 @@
       const modal = document.getElementById('assetModal');
       modal.querySelector('.bottom-sheet').classList.add('hidden');
       setTimeout(() => modal.classList.add('hidden'), 250);
+      editingAsset = null;
+    }
+
+    function deleteAsset(kind, index) {
+      if (useApi) {
+        console.warn('Delete not wired to API in this demo; updating local state only.');
+      }
+      if (kind === 'asset') {
+        state.assets.splice(index, 1);
+      } else {
+        state.liabilities.splice(index, 1);
+      }
+      renderAssets();
+      renderDashboard();
+      renderAdvisor();
+    }
+
+    function deleteTransaction(index) {
+      if (useApi) {
+        console.warn('Delete not wired to API in this demo; updating local state only.');
+      }
+      state.transactions.splice(index, 1);
+      renderDashboard();
+      renderHistory();
+      renderAdvisor();
     }
 
     document.getElementById('transactionForm').addEventListener('submit', async (e) => {
@@ -658,21 +860,25 @@
         occurred_on: new Date().toISOString().slice(0, 10)
       };
       if (useApi) {
+        if (!authToken) { openAuthModal(); return; }
         try {
-          await api('/transactions', { method: 'POST', body: JSON.stringify(payload) });
+          if (editingTransaction !== null) {
+            console.warn('Edit not wired to API in this demo; updating local state only.');
+          } else {
+            await api('/transactions', { method: 'POST', body: JSON.stringify(payload) });
+          }
           await syncFromApi();
         } catch (err) {
           console.error('Failed to save transaction via API', err);
         }
       } else {
         const signedAmount = type === 'income' ? Math.abs(amount) : -Math.abs(amount);
-        state.transactions.unshift({
-          title,
-          amount: signedAmount,
-          type,
-          category: payload.category,
-          date: payload.occurred_on
-        });
+        const entry = { title, amount: signedAmount, type, category: payload.category, date: payload.occurred_on };
+        if (editingTransaction !== null) {
+          state.transactions[editingTransaction] = entry;
+        } else {
+          state.transactions.unshift(entry);
+        }
       }
       form.reset();
       closeTransactionModal();
@@ -691,23 +897,36 @@
       };
       if (!entry.name || !entry.value) return;
       const isAsset = form.kind.value === 'asset';
-      if (isAsset && state.assets.length >= 2 && !checkPrimeStatus('Limit Reached: Upgrade to add unlimited assets.')) {
+      if (isAsset && !editingAsset && state.assets.length >= 2 && !checkPrimeStatus('Limit Reached: Upgrade to add unlimited assets.')) {
         closeAssetModal();
         return;
       }
       if (useApi) {
+        if (!authToken) { openAuthModal(); return; }
         try {
           const path = isAsset ? '/assets' : '/liabilities';
-          await api(path, { method: 'POST', body: JSON.stringify(entry) });
+          if (editingAsset) {
+            console.warn('Edit not wired to API in this demo; updating local state only.');
+          } else {
+            await api(path, { method: 'POST', body: JSON.stringify(entry) });
+          }
           await syncFromApi();
         } catch (err) {
           console.error('Failed to save entry via API', err);
         }
       } else {
         if (isAsset) {
-          state.assets.push(entry);
+          if (editingAsset) {
+            state.assets[editingAsset.index] = entry;
+          } else {
+            state.assets.push(entry);
+          }
         } else {
-          state.liabilities.push(entry);
+          if (editingAsset) {
+            state.liabilities[editingAsset.index] = entry;
+          } else {
+            state.liabilities.push(entry);
+          }
         }
       }
       form.reset();
@@ -730,9 +949,89 @@
     document.getElementById('analyzeCTA').addEventListener('click', () => checkPrimeStatus('Unlock AI Advisor to generate live intelligence.'));
     document.getElementById('closePaywall').addEventListener('click', closePaywall);
     document.getElementById('startTrial').addEventListener('click', activatePrime);
+    authButton?.addEventListener('click', () => {
+      if (authToken) return; // signed in -> use Sign Out button instead
+      openAuthModal();
+    });
+    signOutButton?.addEventListener('click', () => {
+      setAuth('', null);
+      renderDashboard();
+      renderAssets();
+      renderHistory();
+      renderAdvisor();
+      openAuthModal();
+    });
+    document.getElementById('closeAuth').addEventListener('click', closeAuthModal);
+    document.getElementById('authModal').addEventListener('click', (e) => { if (e.target.id === 'authModal') closeAuthModal(); });
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const email = form.email.value.trim();
+      const password = form.password.value;
+      if (!useApi) {
+        if (authErrorEl) {
+          authErrorEl.textContent = 'Set API_URL to your backend (e.g., http://localhost:4001) to sign in.';
+          authErrorEl.classList.remove('hidden');
+        }
+        return;
+      }
+      authErrorEl?.classList.add('hidden');
+      try {
+        const { token, user } = await api('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+        setAuth(token, user);
+        await hydrateUser();
+        await syncFromApi();
+        renderDashboard();
+        renderAssets();
+        renderHistory();
+        renderAdvisor();
+        closeAuthModal();
+        form.reset();
+      } catch (err) {
+        if (authErrorEl) {
+          authErrorEl.textContent = err.message || 'Login failed';
+          authErrorEl.classList.remove('hidden');
+        }
+      }
+    });
+    document.getElementById('assetList').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      const { action, kind, index } = btn.dataset;
+      const idx = Number(index);
+      if (action === 'edit-asset') {
+        openAssetModal(kind, idx);
+      } else if (action === 'delete-asset') {
+        deleteAsset(kind, idx);
+      }
+    });
+    document.getElementById('liabilityList').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      const { action, kind, index } = btn.dataset;
+      const idx = Number(index);
+      if (action === 'edit-asset') {
+        openAssetModal(kind, idx);
+      } else if (action === 'delete-asset') {
+        deleteAsset(kind, idx);
+      }
+    });
+    document.getElementById('historyList').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      const idx = Number(btn.dataset.index);
+      if (btn.dataset.action === 'edit-transaction') {
+        openTransactionModal(idx);
+      } else if (btn.dataset.action === 'delete-transaction') {
+        deleteTransaction(idx);
+      }
+    });
 
     async function bootstrap() {
-      if (useApi) {
+      updateAuthButton();
+      updateSignOutVisibility();
+      if (useApi && authToken) {
+        await hydrateUser();
         await syncFromApi();
       }
       setPrimeVisuals();
@@ -744,7 +1043,7 @@
 
     bootstrap();
 
-    if ('serviceWorker' in navigator) {
+    if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/service-worker.js').catch((err) => console.warn('SW registration failed', err));
       });

@@ -8,11 +8,11 @@ Mobile-first **Dark Neon Glassmorphism** web app for tracking assets, liabilitie
 
 ## Features
 - **Dashboard:** Gradient Net Worth card, Total Assets/Liabilities, Monthly Income/Expenses
-- **Portfolio:** Separate Assets and Liabilities with auto totals
+- **Portfolio:** Assets/Liabilities lists with totals and inline Edit/Delete; single `+ Add` opens modal to choose type
+- **Transactions (History):** Inline Edit/Delete with coloring for income/expense
 - **Agentic AI Advisor:** Chat-like stream with typing effect; Guardian / Strategist / Analyst rules analyze debt ratios, cash runway, and income vs expense, returning glowing insights
-- **History:** Recent transactions with income/expense coloring
 - **Bottom Navigation:** Floating glass bar with Add action opening bottom sheet
-- **Modals:** Slide-up sheets for adding Transactions and Assets/Liabilities
+- **Modals:** Slide-up sheets for adding or editing Transactions and Assets/Liabilities (dark dropdowns)
 - **Animations:** Floating, pulse glow, fade-in-up keyframes
 - **Dummy Data:** Salary, Crypto Portfolio, Car Loan, Food Expense, etc. preloaded
 
@@ -33,17 +33,20 @@ Mobile-first **Dark Neon Glassmorphism** web app for tracking assets, liabilitie
 
 ## Usage
 1) Open `index.html` in your browser.  
-2) Use the bottom nav to switch Home / Assets / Advisor / History, or hit Add to log a transaction.  
-3) Adjust the dummy data in the script to reflect your real portfolio.
+2) Use the bottom nav to switch Home / Assets / Advisor / History, or hit Add to log a transaction (Assets tab also has inline `+ Add`).  
+3) To use live API, set `API_URL` near the top of the `<script>` (e.g., `http://localhost:4001`), then click **Sign In** (demo user: `demo@finmind.ai` / `demo123`). Without API_URL, the app runs in-memory only.  
+4) Edit/Delete entries directly in Assets/Liabilities/History lists; local mode persists only for the session.  
+5) Sign Out clears token/user + resets state; 401 responses auto-logout and reopen the login modal.
 
 ## Customization
 - Core colors live in `:root` inside `<style>` (neon purple/indigo/green/red/cyan).
 - Add or tweak advisor rules in `renderAdvisor()` within `<script>`.
 - Extend seed data in the `state` object (assets, liabilities, transactions).
-- To use the backend API, set `API_URL` near the top of `<script>` (e.g., `http://localhost:4000`).
+- Set `API_URL` near the top of `<script>` (e.g., `http://localhost:4000` or `4001`); leave blank for pure local mode.
 
 ## Data Persistence
-- No backend or database — data stays in browser memory and resets on refresh.
+- No backend or database by default — data stays in browser memory and resets on refresh.
+- When `API_URL` is set and you sign in (JWT token stored in localStorage), data loads/saves via the API. `/me` is called on boot to refresh a stale token.
 
 ## Backend API (Optional)
 Use this when you want persistence and to wrap the app for App Store/Play submission (via PWA + WebView).
@@ -110,6 +113,7 @@ API base URL defaults to `http://localhost:4000`. Set `API_URL` in `index.html` 
 - Auth header: `Authorization: Bearer <token>`
 - Dev header `x-user-id` is **disabled by default**; set `ALLOW_DEV_HEADER=true` only for local testing.
 - In-memory demo user (dev): `demo@finmind.ai` / `demo123`
+- Frontend auto-fetches `/me` on boot if a token exists (refreshes stale localStorage) and logs out on any 401.
 
 ### Endpoints (minimal)
 - `GET /health` – status + whether DB is enabled
@@ -124,6 +128,7 @@ Body: JSON; `Content-Type: application/json`.
 
 ### Notes
 - If `DATABASE_URL` is missing, API serves/updates in-memory demo data.
+- Frontend Edit/Delete currently update client state; extend the API with PUT/DELETE if you need persisted edits/removals.
 - Wrap as PWA + Capacitor/TWA for App Store/Play; point mobile build to the same API base URL.
 
 ### Advisor Insights
