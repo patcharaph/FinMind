@@ -155,11 +155,12 @@
                 <p id="netWorth" class="text-3xl font-bold mt-1">$0</p>
                 <p class="text-xs text-white/70 mt-1">Assets - Liabilities</p>
               </div>
-              <div class="w-12 h-12 rounded-xl bg-white/15 flex items-center justify-center glow">
+              <button id="refreshNetWorth" class="w-12 h-12 rounded-xl bg-white/15 flex items-center justify-center glow transition hover:bg-white/20 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-white/40" aria-label="Refresh data">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-              </div>
+                <span class="sr-only">Refresh</span>
+              </button>
             </div>
             <div class="mt-4 grid grid-cols-2 gap-3 text-sm text-white/80">
               <div class="glass rounded-xl p-3 border border-white/20">
@@ -253,7 +254,7 @@
       <section id="history" data-section class="hidden">
         <div class="flex items-center justify-between mb-2">
           <h2 class="text-lg font-semibold text-white">Transactions</h2>
-          <button id="openTransactionModalTop" class="text-xs glass px-3 py-1 rounded-full border border-white/10 hover:border-white/20 transition">+ Log</button>
+          <button id="openTransactionModalTop" class="text-xs glass px-3 py-1 rounded-full border border-white/10 hover:border-white/20 transition" aria-label="Add transaction">+ Add</button>
         </div>
         <div id="historyList" class="space-y-2"></div>
       </section>
@@ -283,6 +284,29 @@
         Add
       </button>
     </nav>
+
+    <div id="addChooser" class="fixed inset-0 z-40 flex items-end justify-center bg-black/40 hidden">
+      <div class="bottom-sheet glass w-full max-w-md mx-auto rounded-t-3xl p-5 border border-white/10">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-lg font-semibold text-white">Quick Add</h3>
+          <button class="text-slate-400" data-close-add>&times;</button>
+        </div>
+        <div class="grid grid-cols-1 gap-3">
+          <button id="quickAddTransaction" class="w-full glass border border-white/10 rounded-xl px-4 py-3 text-left hover:border-white/20 transition flex items-center justify-between">
+            <span class="text-white font-semibold">Add Transaction</span>
+            <span class="text-xs text-slate-300">Income / Expense</span>
+          </button>
+          <button id="quickAddAsset" class="w-full glass border border-emerald-400/40 rounded-xl px-4 py-3 text-left hover:border-emerald-400/60 transition flex items-center justify-between">
+            <span class="text-white font-semibold">Add Asset</span>
+            <span class="text-xs text-emerald-200">Portfolio</span>
+          </button>
+          <button id="quickAddLiability" class="w-full glass border border-rose-400/40 rounded-xl px-4 py-3 text-left hover:border-rose-400/60 transition flex items-center justify-between">
+            <span class="text-white font-semibold">Add Liability</span>
+            <span class="text-xs text-rose-200">Debt</span>
+          </button>
+        </div>
+      </div>
+    </div>
 
     <div id="transactionModal" class="fixed inset-0 z-40 flex items-end justify-center bg-black/50 hidden">
       <div class="bottom-sheet glass w-full max-w-md mx-auto rounded-t-3xl p-5 border border-white/10">
@@ -466,11 +490,17 @@
     const authModeSignUp = document.getElementById('authModeSignUp');
     const displayNameField = document.getElementById('displayNameField');
     const authSubmit = document.getElementById('authSubmit');
+    const refreshNetWorthBtn = document.getElementById('refreshNetWorth');
+    const addChooser = document.getElementById('addChooser');
+    const quickAddTransaction = document.getElementById('quickAddTransaction');
+    const quickAddAsset = document.getElementById('quickAddAsset');
+    const quickAddLiability = document.getElementById('quickAddLiability');
     let activeSection = 'home';
     let advisorTimer = null;
     let editingAsset = null; // { kind: 'asset'|'liability', index: number }
     let editingTransaction = null; // number index in state.transactions
     let authMode = 'login';
+    let refreshing = false;
 
     const api = async (path, options = {}) => {
       const res = await fetch(`${API_URL}${path}`, {
@@ -601,6 +631,26 @@
     }
     function closeAuthModal() {
       authModal.classList.add('hidden');
+    }
+
+    function openAddChooser() {
+      if (addChooser) {
+        addChooser.classList.remove('hidden');
+        setTimeout(() => addChooser.querySelector('.bottom-sheet')?.classList.remove('hidden'), 10);
+      }
+    }
+    function closeAddChooser() {
+      if (!addChooser) return;
+      addChooser.querySelector('.bottom-sheet')?.classList.add('hidden');
+      setTimeout(() => addChooser.classList.add('hidden'), 200);
+    }
+
+    function setRefreshing(state) {
+      refreshing = state;
+      if (!refreshNetWorthBtn) return;
+      refreshNetWorthBtn.disabled = state;
+      refreshNetWorthBtn.classList.toggle('opacity-70', state);
+      refreshNetWorthBtn.querySelector('svg')?.classList.toggle('animate-spin', state);
     }
 
     function setAuthMode(mode) {
@@ -774,10 +824,10 @@
 
     function switchSection(id) {
       if (id === 'add') {
-        openTransactionModal();
-      } else {
-        activeSection = id;
+        openAddChooser();
+        return;
       }
+      activeSection = id;
       const visible = activeSection;
       sections.forEach(section => {
         section.classList.toggle('hidden', section.id !== visible);
@@ -806,6 +856,7 @@
       }
       modal.classList.remove('hidden');
       setTimeout(() => modal.querySelector('.bottom-sheet').classList.remove('hidden'), 10);
+      setTimeout(() => form.title?.focus(), 50);
     }
     function closeTransactionModal() {
       const modal = document.getElementById('transactionModal');
@@ -972,11 +1023,13 @@
     document.querySelectorAll('[data-close-transaction]').forEach(btn => btn.addEventListener('click', closeTransactionModal));
     document.querySelectorAll('[data-close-asset]').forEach(btn => btn.addEventListener('click', closeAssetModal));
     document.getElementById('openAssetModal').addEventListener('click', openAssetModal);
-    document.getElementById('openTransactionModalTop').addEventListener('click', openTransactionModal);
+    document.getElementById('openTransactionModalTop').addEventListener('click', () => { openTransactionModal(); });
 
     document.getElementById('transactionModal').addEventListener('click', (e) => { if (e.target.id === 'transactionModal') closeTransactionModal(); });
     document.getElementById('assetModal').addEventListener('click', (e) => { if (e.target.id === 'assetModal') closeAssetModal(); });
     document.getElementById('paywallModal').addEventListener('click', (e) => { if (e.target.id === 'paywallModal') closePaywall(); });
+    addChooser?.addEventListener('click', (e) => { if (e.target.id === 'addChooser') closeAddChooser(); });
+    document.querySelector('[data-close-add]')?.addEventListener('click', closeAddChooser);
 
     navButtons.forEach(btn => btn.addEventListener('click', () => switchSection(btn.dataset.target)));
     document.getElementById('analyzeCTA').addEventListener('click', () => checkPrimeStatus('Unlock AI Advisor to generate live intelligence.'));
@@ -1032,6 +1085,30 @@
         }
       }
     });
+    refreshNetWorthBtn?.addEventListener('click', async () => {
+      if (refreshing) return;
+      setRefreshing(true);
+      authErrorEl?.classList.add('hidden');
+      try {
+        if (useApi) {
+          if (!authToken) { openAuthModal(); return; }
+          await hydrateUser();
+          await syncFromApi();
+        }
+        renderDashboard();
+        renderAssets();
+        renderHistory();
+        renderAdvisor();
+      } catch (err) {
+        console.error('Refresh failed', err);
+        if (authErrorEl) {
+          authErrorEl.textContent = err.message || 'Refresh failed';
+          authErrorEl.classList.remove('hidden');
+        }
+      } finally {
+        setRefreshing(false);
+      }
+    });
     document.getElementById('assetList').addEventListener('click', (e) => {
       const btn = e.target.closest('button[data-action]');
       if (!btn) return;
@@ -1064,6 +1141,9 @@
         deleteTransaction(idx);
       }
     });
+    quickAddTransaction?.addEventListener('click', () => { closeAddChooser(); openTransactionModal(); });
+    quickAddAsset?.addEventListener('click', () => { closeAddChooser(); openAssetModal('asset'); });
+    quickAddLiability?.addEventListener('click', () => { closeAddChooser(); openAssetModal('liability'); });
 
     async function bootstrap() {
       updateAuthButton();
