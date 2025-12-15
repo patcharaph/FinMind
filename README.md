@@ -34,7 +34,7 @@ Mobile-first **Dark Neon Glassmorphism** web app for tracking assets, liabilitie
 ## Usage
 1) Open `index.html` in your browser.  
 2) Use the bottom nav to switch Home / Assets / Advisor / History, or hit Add to log a transaction (Assets tab also has inline `+ Add`).  
-3) To use live API, set `API_URL` near the top of the `<script>` (e.g., `http://localhost:4001`), then click **Sign In** (demo user: `demo@finmind.ai` / `demo123`). Without API_URL, the app runs in-memory only.  
+3) When served over http(s), the app auto-uses the same origin for API calls. Use the modal to **Sign In** or **Sign Up** (demo: `demo@finmind.ai` / `demo123`). Opening via `file://` falls back to `http://localhost:4001` so adds still hit your running backend; override with `window.API_URL` if needed.  
 4) Edit/Delete entries directly in Assets/Liabilities/History lists; local mode persists only for the session.  
 5) Sign Out clears token/user + resets state; 401 responses auto-logout and reopen the login modal.
 
@@ -42,11 +42,11 @@ Mobile-first **Dark Neon Glassmorphism** web app for tracking assets, liabilitie
 - Core colors live in `:root` inside `<style>` (neon purple/indigo/green/red/cyan).
 - Add or tweak advisor rules in `renderAdvisor()` within `<script>`.
 - Extend seed data in the `state` object (assets, liabilities, transactions).
-- Set `API_URL` near the top of `<script>` (e.g., `http://localhost:4000` or `4001`); leave blank for pure local mode.
+- Served over http(s), API calls default to the current origin. If opened via `file://`, it falls back to `http://localhost:4001`. Override by setting `window.API_URL` near the top of `<script>` (e.g., `http://localhost:4000` or `4001`).
 
 ## Data Persistence
 - No backend or database by default — data stays in browser memory and resets on refresh.
-- When `API_URL` is set and you sign in (JWT token stored in localStorage), data loads/saves via the API. `/me` is called on boot to refresh a stale token.
+- When loaded over http(s), signing in uses the API at the current origin (or `API_URL` override). If opened via `file://`, calls target `http://localhost:4001` by default so you can still hit a running backend. `/me` is called on boot to refresh a stale token.
 
 ## Backend API (Optional)
 Use this when you want persistence and to wrap the app for App Store/Play submission (via PWA + WebView).
@@ -104,7 +104,7 @@ npm start
 npm run dev
 ```
 
-API base URL defaults to `http://localhost:4000`. Set `API_URL` in `index.html` to match.
+API base URL defaults to the current origin when served over http(s). If opened via `file://`, it falls back to `http://localhost:4001`; set `window.API_URL` in `index.html` if you need to target a different backend (e.g., `http://localhost:4000`).
 
 ### Auth
 - `POST /auth/signup` – body: `{ email, password, display_name?, plan? }` → returns `{ token, user }`
@@ -113,7 +113,7 @@ API base URL defaults to `http://localhost:4000`. Set `API_URL` in `index.html` 
 - Auth header: `Authorization: Bearer <token>`
 - Dev header `x-user-id` is **disabled by default**; set `ALLOW_DEV_HEADER=true` only for local testing.
 - In-memory demo user (dev): `demo@finmind.ai` / `demo123`
-- Frontend auto-fetches `/me` on boot if a token exists (refreshes stale localStorage) and logs out on any 401.
+- Frontend modal supports Sign In/Sign Up; auto-fetches `/me` on boot if a token exists (refreshes stale localStorage) and logs out on any 401.
 
 ### Endpoints (minimal)
 - `GET /health` – status + whether DB is enabled

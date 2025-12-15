@@ -388,10 +388,13 @@
         <div class="prime-card p-6 relative">
           <button id="closeAuth" class="absolute top-3 right-3 text-slate-400 hover:text-white transition">&times;</button>
           <div class="space-y-4">
-            <div class="text-center space-y-1">
+            <div class="text-center space-y-3">
               <p class="text-xs uppercase tracking-[0.2em] text-fuchsia-300">Authentication</p>
-              <h3 class="text-xl font-semibold text-white">Sign in to sync</h3>
-              <p class="text-slate-300 text-sm">Use your API credentials to load/save data. Demo stays local.</p>
+              <div class="flex items-center justify-center gap-2">
+                <button id="authModeSignIn" type="button" class="px-3 py-1 text-sm rounded-full border border-white/10 text-white bg-white/5">Sign In</button>
+                <button id="authModeSignUp" type="button" class="px-3 py-1 text-sm rounded-full border border-white/5 text-slate-200">Sign Up</button>
+              </div>
+              <p class="text-slate-300 text-sm" id="authSubtitle">Use your API credentials to load/save data. Demo stays local.</p>
               <p id="authError" class="text-rose-300 text-sm hidden"></p>
             </div>
             <form id="loginForm" class="space-y-3">
@@ -401,8 +404,11 @@
               <label class="text-sm text-slate-300 block">Password
                 <input required name="password" type="password" class="w-full mt-1 glass rounded-xl px-3 py-2 border border-white/10 text-white bg-white/5" placeholder="••••••••" />
               </label>
-              <button class="w-full bg-gradient-to-r from-[#d946ef] via-[#7c3aed] to-[#06b6d4] text-white font-semibold py-3 rounded-xl prime-cta" type="submit">Sign In</button>
-              <p class="text-xs text-slate-400 text-center">Need an account? Use /auth/signup via API first.</p>
+              <label id="displayNameField" class="text-sm text-slate-300 block hidden">Display name (optional)
+                <input name="display_name" type="text" class="w-full mt-1 glass rounded-xl px-3 py-2 border border-white/10 text-white bg-white/5" placeholder="Investor Zero" />
+              </label>
+              <button id="authSubmit" class="w-full bg-gradient-to-r from-[#d946ef] via-[#7c3aed] to-[#06b6d4] text-white font-semibold py-3 rounded-xl prime-cta" type="submit">Sign In</button>
+              <p class="text-xs text-slate-400 text-center" id="authHint">Need an account? Tap Sign Up.</p>
             </form>
           </div>
         </div>
@@ -411,9 +417,13 @@
   </div>
 
   <script>
-    // Set API_URL to '' when running the standalone file (file://) to avoid failed fetches.
-    // Point it to your backend (e.g., http://localhost:4001) when the server is running.
-    const API_URL = ''; // Backend API base
+    // Auto-detect backend:
+    // - http(s): use same origin
+    // - file:// : fall back to localhost:4001 so adds go to the DB if the API is running
+    // Override anytime via window.API_URL (e.g., http://localhost:4001).
+    const DEFAULT_API = 'http://localhost:4001';
+    const isHttpContext = typeof window !== 'undefined' && window.location.protocol.startsWith('http');
+    const API_URL = window.API_URL || (isHttpContext ? window.location.origin : DEFAULT_API); // Backend API base
     const useApi = API_URL.startsWith('http');
     let authToken = localStorage.getItem('finmind_token') || '';
     let currentUser = null;
@@ -446,14 +456,21 @@
     const paywallModal = document.getElementById('paywallModal');
     const authModal = document.getElementById('authModal');
     const authErrorEl = document.getElementById('authError');
+    const authSubtitle = document.getElementById('authSubtitle');
+    const authHint = document.getElementById('authHint');
     const paywallMessageEl = document.getElementById('paywallMessage');
     const tierBadge = document.getElementById('tierBadge');
     const authButton = document.getElementById('authButton');
     const signOutButton = document.getElementById('signOutButton');
+    const authModeSignIn = document.getElementById('authModeSignIn');
+    const authModeSignUp = document.getElementById('authModeSignUp');
+    const displayNameField = document.getElementById('displayNameField');
+    const authSubmit = document.getElementById('authSubmit');
     let activeSection = 'home';
     let advisorTimer = null;
     let editingAsset = null; // { kind: 'asset'|'liability', index: number }
     let editingTransaction = null; // number index in state.transactions
+    let authMode = 'login';
 
     const api = async (path, options = {}) => {
       const res = await fetch(`${API_URL}${path}`, {
@@ -574,7 +591,7 @@
     function openAuthModal() {
       if (!useApi) {
         if (authErrorEl) {
-          authErrorEl.textContent = 'Set API_URL to your backend (e.g., http://localhost:4001) to enable sign in.';
+          authErrorEl.textContent = `Serve over http(s) or set API_URL (default ${DEFAULT_API}) to enable sign in.`;
           authErrorEl.classList.remove('hidden');
         }
         return;
@@ -584,6 +601,22 @@
     }
     function closeAuthModal() {
       authModal.classList.add('hidden');
+    }
+
+    function setAuthMode(mode) {
+      authMode = mode;
+      const isSignup = mode === 'signup';
+      displayNameField?.classList.toggle('hidden', !isSignup);
+      authSubmit.textContent = isSignup ? 'Create Account' : 'Sign In';
+      authModeSignIn?.classList.toggle('bg-white/20', !isSignup);
+      authModeSignIn?.classList.toggle('border-white/10', !isSignup);
+      authModeSignIn?.classList.toggle('bg-white/5', isSignup);
+      authModeSignUp?.classList.toggle('bg-white/20', isSignup);
+      authModeSignUp?.classList.toggle('border-white/10', isSignup);
+      authModeSignUp?.classList.toggle('bg-white/5', !isSignup);
+      if (authSubtitle) authSubtitle.textContent = isSignup ? 'Create an account to sync via your API backend.' : 'Use your API credentials to load/save data. Demo stays local.';
+      if (authHint) authHint.textContent = isSignup ? 'Already have an account? Tap Sign In.' : 'Need an account? Tap Sign Up.';
+      authErrorEl?.classList.add('hidden');
     }
 
 
@@ -961,6 +994,8 @@
       renderAdvisor();
       openAuthModal();
     });
+    authModeSignIn?.addEventListener('click', () => setAuthMode('login'));
+    authModeSignUp?.addEventListener('click', () => setAuthMode('signup'));
     document.getElementById('closeAuth').addEventListener('click', closeAuthModal);
     document.getElementById('authModal').addEventListener('click', (e) => { if (e.target.id === 'authModal') closeAuthModal(); });
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -968,16 +1003,19 @@
       const form = e.target;
       const email = form.email.value.trim();
       const password = form.password.value;
+      const display_name = form.display_name?.value.trim();
       if (!useApi) {
         if (authErrorEl) {
-          authErrorEl.textContent = 'Set API_URL to your backend (e.g., http://localhost:4001) to sign in.';
+          authErrorEl.textContent = `Serve over http(s) or set API_URL (default ${DEFAULT_API}) to sign in.`;
           authErrorEl.classList.remove('hidden');
         }
         return;
       }
       authErrorEl?.classList.add('hidden');
       try {
-        const { token, user } = await api('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+        const path = authMode === 'signup' ? '/auth/signup' : '/auth/login';
+        const payload = authMode === 'signup' ? { email, password, display_name } : { email, password };
+        const { token, user } = await api(path, { method: 'POST', body: JSON.stringify(payload) });
         setAuth(token, user);
         await hydrateUser();
         await syncFromApi();
@@ -1034,6 +1072,7 @@
         await hydrateUser();
         await syncFromApi();
       }
+      setAuthMode('login');
       setPrimeVisuals();
       renderDashboard();
       renderAssets();
