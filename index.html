@@ -401,7 +401,7 @@
               </div>
             </div>
             <button id="startTrial" class="w-full bg-gradient-to-r from-[#d946ef] via-[#7c3aed] to-[#06b6d4] text-white font-semibold py-3 rounded-xl prime-cta">Start 7-Day Free Trial</button>
-            <p class="text-xs text-slate-400">Then ฿59/mo. Cancel anytime.</p>
+              <p class="text-xs text-slate-400">Then $1/mo (Plus) or $2/mo (Prime). Annual: $10/$20.</p>
           </div>
         </div>
       </div>
@@ -431,6 +431,14 @@
               <label id="displayNameField" class="text-sm text-slate-300 block hidden">Display name (optional)
                 <input name="display_name" type="text" class="w-full mt-1 glass rounded-xl px-3 py-2 border border-white/10 text-white bg-white/5" placeholder="Investor Zero" />
               </label>
+              <label id="planField" class="text-sm text-slate-300 block hidden">Plan
+                <select name="plan" class="w-full mt-1 glass dark-select rounded-xl px-3 py-2 border border-white/10 text-white bg-white/5">
+                  <option value="free">FinMind Free (default)</option>
+                  <option value="plus">FinMind Plus</option>
+                  <option value="prime">FinMind Prime</option>
+                </select>
+                <p class="text-xs text-slate-400 mt-1">Plus/Prime unlock full Advisor and unlimited assets.</p>
+              </label>
               <button id="authSubmit" class="w-full bg-gradient-to-r from-[#d946ef] via-[#7c3aed] to-[#06b6d4] text-white font-semibold py-3 rounded-xl prime-cta" type="submit">Sign In</button>
               <p class="text-xs text-slate-400 text-center" id="authHint">Need an account? Tap Sign Up.</p>
             </form>
@@ -446,13 +454,27 @@
     // - file:// : fall back to localhost:4001 so adds go to the DB if the API is running
     // Override anytime via window.API_URL (e.g., http://localhost:4001).
     const DEFAULT_API = 'http://localhost:4001';
+    const TRIAL_KEY = 'finmind_trial_expiry';
     const isHttpContext = typeof window !== 'undefined' && window.location.protocol.startsWith('http');
     const API_URL = window.API_URL || (isHttpContext ? window.location.origin : DEFAULT_API); // Backend API base
     const useApi = API_URL.startsWith('http');
     let authToken = localStorage.getItem('finmind_token') || '';
     let currentUser = null;
     try { currentUser = JSON.parse(localStorage.getItem('finmind_user') || 'null'); } catch { currentUser = null; }
-    let isPrime = currentUser?.plan === 'prime';
+    let currentPlan = currentUser?.plan || 'free';
+    const hasActiveTrial = () => {
+      const expiry = Number(localStorage.getItem(TRIAL_KEY) || '0');
+      if (!expiry) return false;
+      if (expiry > Date.now()) return true;
+      localStorage.removeItem(TRIAL_KEY);
+      return false;
+    };
+    const premiumActive = () => {
+      const premium = ['prime', 'plus'].includes(currentPlan) || hasActiveTrial();
+      isPrime = premium;
+      return premium;
+    };
+    let isPrime = premiumActive();
     let paywallReason = 'Experience full AI wealth intelligence, premium visuals, and unlimited growth.';
     const state = {
       assets: [
@@ -490,6 +512,7 @@
     const authModeSignIn = document.getElementById('authModeSignIn');
     const authModeSignUp = document.getElementById('authModeSignUp');
     const displayNameField = document.getElementById('displayNameField');
+    const planField = document.getElementById('planField');
     const authSubmit = document.getElementById('authSubmit');
     const refreshNetWorthBtn = document.getElementById('refreshNetWorth');
     const addChooser = document.getElementById('addChooser');
@@ -558,10 +581,12 @@
     }
 
     function setPrimeVisuals() {
+      premiumActive();
       if (!tierBadge) return;
       if (isPrime) {
         document.body.classList.add('prime-mode');
-        tierBadge.textContent = 'FinMind Prime';
+        const label = hasActiveTrial() ? 'FinMind Prime (Trial)' : (currentPlan === 'prime' ? 'FinMind Prime' : 'FinMind Plus');
+        tierBadge.textContent = label;
         tierBadge.classList.add('bg-gradient-to-r', 'from-[#d946ef]/20', 'to-[#06b6d4]/20', 'text-white');
       } else {
         document.body.classList.remove('prime-mode');
@@ -581,13 +606,15 @@
     }
 
     function checkPrimeStatus(reason) {
-      if (isPrime) return true;
+      if (premiumActive()) return true;
       openPaywall(reason || paywallReason);
       return false;
     }
 
-    function activatePrime() {
-      isPrime = true;
+    function startTrial(days = 7) {
+      const expiry = Date.now() + days * 24 * 60 * 60 * 1000;
+      localStorage.setItem(TRIAL_KEY, String(expiry));
+      premiumActive();
       closePaywall();
       setPrimeVisuals();
       renderAdvisor();
@@ -596,6 +623,7 @@
     function setAuth(token, user) {
       authToken = token || '';
       currentUser = user || null;
+      currentPlan = currentUser?.plan || 'free';
       if (token && user) {
         localStorage.setItem('finmind_token', token);
         localStorage.setItem('finmind_user', JSON.stringify(user));
@@ -603,7 +631,7 @@
         localStorage.removeItem('finmind_token');
         localStorage.removeItem('finmind_user');
       }
-      isPrime = currentUser?.plan === 'prime';
+      isPrime = premiumActive();
       setPrimeVisuals();
       updateAuthButton();
       updateSignOutVisibility();
@@ -665,6 +693,7 @@
       authMode = mode;
       const isSignup = mode === 'signup';
       displayNameField?.classList.toggle('hidden', !isSignup);
+      planField?.classList.toggle('hidden', !isSignup);
       authSubmit.textContent = isSignup ? 'Create Account' : 'Sign In';
       authModeSignIn?.classList.toggle('bg-white/20', !isSignup);
       authModeSignIn?.classList.toggle('border-white/10', !isSignup);
@@ -764,6 +793,7 @@
     }
 
     function renderAdvisor() {
+      premiumActive();
       advisorStream.innerHTML = '';
       if (advisorTimer) clearTimeout(advisorTimer);
       if (!isPrime) {
@@ -989,7 +1019,8 @@
       };
       if (!entry.name || !entry.value) return;
       const isAsset = form.kind.value === 'asset';
-      if (isAsset && !editingAsset && state.assets.length >= 2 && !checkPrimeStatus('Limit Reached: Upgrade to add unlimited assets.')) {
+      const totalHoldings = state.assets.length + state.liabilities.length;
+      if (isAsset && !editingAsset && totalHoldings >= 5 && !checkPrimeStatus('Limit Reached: Upgrade to add unlimited assets.')) {
         closeAssetModal();
         return;
       }
@@ -1042,7 +1073,7 @@
     navButtons.forEach(btn => btn.addEventListener('click', () => switchSection(btn.dataset.target)));
     document.getElementById('analyzeCTA').addEventListener('click', () => checkPrimeStatus('Unlock AI Advisor to generate live intelligence.'));
     document.getElementById('closePaywall').addEventListener('click', closePaywall);
-    document.getElementById('startTrial').addEventListener('click', activatePrime);
+    document.getElementById('startTrial').addEventListener('click', () => startTrial());
     authButton?.addEventListener('click', () => {
       if (authToken) return; // signed in -> use Sign Out button instead
       openAuthModal();
@@ -1065,6 +1096,7 @@
       const email = form.email.value.trim();
       const password = form.password.value;
       const display_name = form.display_name?.value.trim();
+      const plan = form.plan?.value || 'free';
       if (!useApi) {
         if (authErrorEl) {
           authErrorEl.textContent = `Serve over http(s) or set API_URL (default ${DEFAULT_API}) to sign in.`;
@@ -1075,7 +1107,7 @@
       authErrorEl?.classList.add('hidden');
       try {
         const path = authMode === 'signup' ? '/auth/signup' : '/auth/login';
-        const payload = authMode === 'signup' ? { email, password, display_name } : { email, password };
+        const payload = authMode === 'signup' ? { email, password, display_name, plan } : { email, password };
         const { token, user } = await api(path, { method: 'POST', body: JSON.stringify(payload) });
         setAuth(token, user);
         await hydrateUser();

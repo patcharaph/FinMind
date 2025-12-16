@@ -16,17 +16,22 @@ Mobile-first **Dark Neon Glassmorphism** web app for tracking assets, liabilitie
 - **Animations:** Floating, pulse glow, fade-in-up keyframes
 - **Dummy Data:** Salary, Crypto Portfolio, Car Loan, Food Expense, etc. preloaded
 
-## Freemium Model (FinMind Prime)
-- Free: Unlimited transactions, max 2 assets, Advisor tab locked (teaser only)
-- Prime: Unlimited assets, full AI Advisor, premium neon/glass visuals
-- Paywall triggers: Advisor → "Analyze My Wealth" CTA, or adding a 3rd asset
-- Simulate Prime by setting `isPrime = true` inside `index.html` (search for the variable near the top of the script)
+## Freemium Model (FinMind Plus/Prime)
+- Free: Unlimited transactions; assets+liabilities รวมกันสูงสุด 5; Advisor teaser (ตัวอย่าง insight สั้นๆ); Export/Backup/AI chat ปิด
+- Plus/Prime: ปลดล็อก Advisor เต็ม, เพิ่ม asset/liability ได้ไม่จำกัด, ใช้ตามโควตา AI (ดู Pricing Tiers)
+- Paywall triggers: กด “Analyze My Wealth (Full)”, เพิ่มรายการสินทรัพย์/หนี้เกิน 5, ขอ Export/Backup
 
-### Monetization / Paywall Behavior
-- Badge/brand: all premium copy uses “FinMind Prime”; badge updates when `plan === "prime"` or `isPrime` is toggled.
-- Advisor lock: overlay appears when not Prime; CTA opens paywall modal; “Start Trial” flips `isPrime` client-side for demoing.
-- Asset limit: adding a 3rd asset (while not Prime) opens the paywall and blocks the add.
-- Backend plan: set `plan: "prime"` during `/auth/signup` (or manually update the user) to drive Prime state when using the API.
+### Pricing Tiers
+- **Free**: Unlimited transactions; assets+liabilities capped at 5; Advisor teaser (sample insight only); export/backup + deep insights locked.
+- **Plus** (main paid): Unlimited assets/liabilities; full Advisor rule-based insights; AI advice quota 20/mo; CSV export/backup. Suggested: $1/mo or $10/yr.
+- **Prime** (power users): Everything in Plus; AI advice 200/mo; premium themes/glass; advanced insights (payoff plans, what-if, runway). Suggested: $2/mo or $20/yr.
+- **Trial**: 7-day local trial unlocks premium features client-side; expires via `localStorage` timestamp unless backend `plan` is premium.
+
+### Paywall Behavior
+- Badge/brand: shows FinMind Plus/Prime; trial shows FinMind Prime (Trial).
+- Advisor lock: overlay for Free; CTA opens paywall; Start Trial unlocks Advisor.
+- Asset limit: Free blocked at 5 assets+liabilities; Plus/Prime/trial are unlimited.
+- Backend plan: set `plan: "plus"` or `plan: "prime"` during `/auth/signup` (or update user) to unlock server-backed premium.
 
 ## UI Preview
 <img src="preview.svg" alt="FinMind UI preview" width="320" />
