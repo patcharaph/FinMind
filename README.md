@@ -28,10 +28,10 @@ Mobile-first **Dark Neon Glassmorphism** web app for tracking assets, liabilitie
 - **Trial**: 7-day local trial unlocks premium features client-side; expires via `localStorage` timestamp unless backend `plan` is premium.
 
 ### Paywall Behavior
-- Badge/brand: shows FinMind Plus/Prime; trial shows FinMind Prime (Trial).
-- Advisor lock: overlay for Free; CTA opens paywall; Start Trial unlocks Advisor.
-- Asset limit: Free blocked at 5 assets+liabilities; Plus/Prime/trial are unlimited.
-- Backend plan: set `plan: "plus"` or `plan: "prime"` during `/auth/signup` (or update user) to unlock server-backed premium.
+- Badge/brand: shows FinMind Plus/Prime; trial shows FinMind Prime (Trial). Prime/Trial also toggles premium theme; Plus stays on standard theme.
+- Advisor lock: Free sees teaser; Plus/Prime/Trial get full Advisor. CTA opens paywall; Start Trial unlocks Advisor client-side.
+- Asset limit: Free blocked at 5 assets+liabilities; Plus/Prime/Trial are unlimited.
+- Backend plan: set `plan: "plus"` or `plan: "prime"` during `/auth/signup` (or update user) to unlock server-backed premium; trial is local-time limited.
 
 ## UI Preview
 <img src="preview.svg" alt="FinMind UI preview" width="320" />
