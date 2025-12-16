@@ -16,11 +16,17 @@ Mobile-first **Dark Neon Glassmorphism** web app for tracking assets, liabilitie
 - **Animations:** Floating, pulse glow, fade-in-up keyframes
 - **Dummy Data:** Salary, Crypto Portfolio, Car Loan, Food Expense, etc. preloaded
 
-## Freemium Model (NeonFlux Prime)
+## Freemium Model (FinMind Prime)
 - Free: Unlimited transactions, max 2 assets, Advisor tab locked (teaser only)
 - Prime: Unlimited assets, full AI Advisor, premium neon/glass visuals
 - Paywall triggers: Advisor → "Analyze My Wealth" CTA, or adding a 3rd asset
 - Simulate Prime by setting `isPrime = true` inside `index.html` (search for the variable near the top of the script)
+
+### Monetization / Paywall Behavior
+- Badge/brand: all premium copy uses “FinMind Prime”; badge updates when `plan === "prime"` or `isPrime` is toggled.
+- Advisor lock: overlay appears when not Prime; CTA opens paywall modal; “Start Trial” flips `isPrime` client-side for demoing.
+- Asset limit: adding a 3rd asset (while not Prime) opens the paywall and blocks the add.
+- Backend plan: set `plan: "prime"` during `/auth/signup` (or manually update the user) to drive Prime state when using the API.
 
 ## UI Preview
 <img src="preview.svg" alt="FinMind UI preview" width="320" />

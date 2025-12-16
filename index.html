@@ -241,10 +241,10 @@
           </div>
         </div>
         <div class="glass rounded-2xl p-4 border border-white/10 min-h-[260px] relative overflow-hidden">
-          <div id="advisorLock" class="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/65 backdrop-blur-md border border-fuchsia-400/30 rounded-2xl text-center px-4 hidden">
+          <div id="advisorLock" class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-black/65 backdrop-blur-md border border-fuchsia-400/30 rounded-2xl text-center px-4 hidden">
             <p class="text-xs uppercase tracking-[0.2em] text-fuchsia-300">Locked · Prime Only</p>
             <p class="text-lg font-semibold text-white">AI Advisor in Teaser Mode</p>
-            <p class="text-slate-300 text-sm max-w-xs">Preview your signal feed, then unlock NeonFlux Prime to stream full insights.</p>
+            <p class="text-slate-300 text-sm max-w-xs">Preview your signal feed, then unlock FinMind Prime to stream full insights.</p>
             <button id="analyzeCTA" class="w-full max-w-xs bg-gradient-to-r from-[#d946ef] via-[#7c3aed] to-[#06b6d4] text-white font-semibold py-3 rounded-xl prime-cta shadow-xl">Analyze My Wealth</button>
           </div>
           <div id="advisorStream" class="space-y-3 text-sm"></div>
@@ -382,8 +382,8 @@
               </svg>
             </div>
             <div>
-              <p class="text-xs uppercase tracking-[0.24em] text-fuchsia-300">NeonFlux Prime</p>
-              <h3 class="text-2xl font-semibold text-white mt-1">Unlock NeonFlux Prime</h3>
+              <p class="text-xs uppercase tracking-[0.24em] text-fuchsia-300">FinMind Prime</p>
+              <h3 class="text-2xl font-semibold text-white mt-1">Unlock FinMind Prime</h3>
               <p id="paywallMessage" class="text-slate-300 text-sm mt-2">Experience full AI wealth intelligence, premium visuals, and unlimited growth.</p>
             </div>
             <div class="w-full glass rounded-2xl p-4 border border-white/10 text-left space-y-2">
@@ -397,7 +397,7 @@
               </div>
               <div class="flex items-center space-x-2 text-white">
                 <span class="w-5 h-5 rounded-full bg-fuchsia-500/30 border border-fuchsia-400 flex items-center justify-center text-xs text-fuchsia-100">✓</span>
-                <p class="text-sm">Premium NeonFlux themes & glass morph layers</p>
+                <p class="text-sm">Premium FinMind themes & glass morph layers</p>
               </div>
             </div>
             <button id="startTrial" class="w-full bg-gradient-to-r from-[#d946ef] via-[#7c3aed] to-[#06b6d4] text-white font-semibold py-3 rounded-xl prime-cta">Start 7-Day Free Trial</button>
@@ -561,7 +561,7 @@
       if (!tierBadge) return;
       if (isPrime) {
         document.body.classList.add('prime-mode');
-        tierBadge.textContent = 'NeonFlux Prime';
+        tierBadge.textContent = 'FinMind Prime';
         tierBadge.classList.add('bg-gradient-to-r', 'from-[#d946ef]/20', 'to-[#06b6d4]/20', 'text-white');
       } else {
         document.body.classList.remove('prime-mode');
