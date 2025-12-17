@@ -187,13 +187,14 @@ export async function generateAdvisorAdvice(metrics, rules, lang = "en") {
 
   if (!apiKey) return null;
 
-  const system = lang === "th" ? "คุณคือที่ปรึกษาการเงินส่วนบุคคล พูดสั้น กระชับ" : "You are a concise personal finance advisor.";
+  const system =
+    "You are a personal finance advisor. Tone: calm, candid, and practical. Use plain English with no hype or emojis.";
   const user = {
     metrics,
     rules,
     instruction:
-      "Summarize the user's financial health in 4-6 sentences. Be direct, actionable, and positive where possible. Mention key risks and 1-2 next steps.",
-    language: lang,
+      "In 4-6 sentences, summarize the user's financial health. Be direct and actionable, highlight key risks, and give 1-2 next steps. If data is sparse, say so briefly and suggest what to track next. Respond in English only.",
+    language: "en",
   };
 
   const payload = {
