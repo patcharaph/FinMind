@@ -1146,29 +1146,54 @@
     }
 
     function deleteAsset(kind, index) {
+      const existing = kind === 'asset' ? state.assets[index] : state.liabilities[index];
+      const path = kind === 'asset' ? '/assets' : '/liabilities';
       if (useApi) {
-        console.warn('Delete not wired to API in this demo; updating local state only.');
-      }
-      if (kind === 'asset') {
-        state.assets.splice(index, 1);
+        if (!authToken) { openAuthModal(); return; }
+        if (!existing?.id) { console.warn('Missing id'); return; }
+        api(`${path}/${existing.id}`, { method: 'DELETE' })
+          .then(syncFromApi)
+          .then(() => {
+            resetAdvisorCache();
+            renderAssets();
+            renderDashboard();
+            renderAdvisor();
+          })
+          .catch((err) => console.error('Failed to delete via API', err));
       } else {
-        state.liabilities.splice(index, 1);
+        if (kind === 'asset') {
+          state.assets.splice(index, 1);
+        } else {
+          state.liabilities.splice(index, 1);
+        }
+        resetAdvisorCache();
+        renderAssets();
+        renderDashboard();
+        renderAdvisor();
       }
-      resetAdvisorCache();
-      renderAssets();
-      renderDashboard();
-      renderAdvisor();
     }
 
     function deleteTransaction(index) {
+      const existing = state.transactions[index];
       if (useApi) {
-        console.warn('Delete not wired to API in this demo; updating local state only.');
+        if (!authToken) { openAuthModal(); return; }
+        if (!existing?.id) { console.warn('Missing transaction id'); return; }
+        api(`/transactions/${existing.id}`, { method: 'DELETE' })
+          .then(syncFromApi)
+          .then(() => {
+            resetAdvisorCache();
+            renderDashboard();
+            renderHistory();
+            renderAdvisor();
+          })
+          .catch((err) => console.error('Failed to delete transaction via API', err));
+      } else {
+        state.transactions.splice(index, 1);
+        resetAdvisorCache();
+        renderDashboard();
+        renderHistory();
+        renderAdvisor();
       }
-      state.transactions.splice(index, 1);
-      resetAdvisorCache();
-      renderDashboard();
-      renderHistory();
-      renderAdvisor();
     }
 
     document.getElementById('transactionForm').addEventListener('submit', async (e) => {
@@ -1189,13 +1214,16 @@
         if (!authToken) { openAuthModal(); return; }
         try {
           if (editingTransaction !== null) {
-            console.warn('Edit not wired to API in this demo; updating local state only.');
+            const existing = state.transactions[editingTransaction];
+            if (!existing?.id) throw new Error('Missing transaction id');
+            await api(`/transactions/${existing.id}`, { method: 'PUT', body: JSON.stringify(payload) });
           } else {
             await api('/transactions', { method: 'POST', body: JSON.stringify(payload) });
           }
           await syncFromApi();
         } catch (err) {
           console.error('Failed to save transaction via API', err);
+          return;
         }
       } else {
         const signedAmount = type === 'income' ? Math.abs(amount) : -Math.abs(amount);
@@ -1234,7 +1262,9 @@
         try {
           const path = isAsset ? '/assets' : '/liabilities';
           if (editingAsset) {
-            console.warn('Edit not wired to API in this demo; updating local state only.');
+            const existing = isAsset ? state.assets[editingAsset.index] : state.liabilities[editingAsset.index];
+            if (!existing?.id) throw new Error('Missing id');
+            await api(`${path}/${existing.id}`, { method: 'PUT', body: JSON.stringify(entry) });
           } else {
             await api(path, { method: 'POST', body: JSON.stringify(entry) });
           }

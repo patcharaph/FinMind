@@ -285,6 +285,38 @@ app.post("/assets", async (req, res) => {
   res.json(rows[0]);
 });
 
+app.put("/assets/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  const { name, value, tag } = req.body;
+  if (!id || !name || value === undefined) return res.status(400).json({ error: "id, name, value required" });
+  if (!useDb) {
+    const idx = memory.assets.findIndex((a) => a.id === id && a.user_id === req.userId);
+    if (idx === -1) return res.status(404).json({ error: "Not found" });
+    memory.assets[idx] = { ...memory.assets[idx], name, value: Number(value), tag };
+    return res.json(memory.assets[idx]);
+  }
+  const { rows } = await pool.query(
+    "UPDATE assets SET name=$1, tag=$2, value=$3 WHERE id=$4 AND user_id=$5 RETURNING *",
+    [name, tag, value, id, req.userId]
+  );
+  if (rows.length === 0) return res.status(404).json({ error: "Not found" });
+  res.json(rows[0]);
+});
+
+app.delete("/assets/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) return res.status(400).json({ error: "id required" });
+  if (!useDb) {
+    const idx = memory.assets.findIndex((a) => a.id === id && a.user_id === req.userId);
+    if (idx === -1) return res.status(404).json({ error: "Not found" });
+    const removed = memory.assets.splice(idx, 1)[0];
+    return res.json(removed);
+  }
+  const { rows } = await pool.query("DELETE FROM assets WHERE id=$1 AND user_id=$2 RETURNING *", [id, req.userId]);
+  if (rows.length === 0) return res.status(404).json({ error: "Not found" });
+  res.json(rows[0]);
+});
+
 app.get("/liabilities", async (req, res) => {
   const liabilities = await listLiabilities(req.userId);
   res.json(liabilities);
@@ -303,6 +335,38 @@ app.post("/liabilities", async (req, res) => {
     "INSERT INTO liabilities (user_id, name, tag, value) VALUES ($1,$2,$3,$4) RETURNING *",
     [req.userId, name, tag, value]
   );
+  res.json(rows[0]);
+});
+
+app.put("/liabilities/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  const { name, value, tag } = req.body;
+  if (!id || !name || value === undefined) return res.status(400).json({ error: "id, name, value required" });
+  if (!useDb) {
+    const idx = memory.liabilities.findIndex((l) => l.id === id && l.user_id === req.userId);
+    if (idx === -1) return res.status(404).json({ error: "Not found" });
+    memory.liabilities[idx] = { ...memory.liabilities[idx], name, value: Number(value), tag };
+    return res.json(memory.liabilities[idx]);
+  }
+  const { rows } = await pool.query(
+    "UPDATE liabilities SET name=$1, tag=$2, value=$3 WHERE id=$4 AND user_id=$5 RETURNING *",
+    [name, tag, value, id, req.userId]
+  );
+  if (rows.length === 0) return res.status(404).json({ error: "Not found" });
+  res.json(rows[0]);
+});
+
+app.delete("/liabilities/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) return res.status(400).json({ error: "id required" });
+  if (!useDb) {
+    const idx = memory.liabilities.findIndex((l) => l.id === id && l.user_id === req.userId);
+    if (idx === -1) return res.status(404).json({ error: "Not found" });
+    const removed = memory.liabilities.splice(idx, 1)[0];
+    return res.json(removed);
+  }
+  const { rows } = await pool.query("DELETE FROM liabilities WHERE id=$1 AND user_id=$2 RETURNING *", [id, req.userId]);
+  if (rows.length === 0) return res.status(404).json({ error: "Not found" });
   res.json(rows[0]);
 });
 
@@ -336,6 +400,48 @@ app.post("/transactions", async (req, res) => {
     "INSERT INTO transactions (user_id, title, category, type, amount, occurred_on) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *",
     [req.userId, title, category, type, finalAmount, occurred_on || new Date()]
   );
+  res.json(rows[0]);
+});
+
+app.put("/transactions/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  const { title, amount, type, category, occurred_on } = req.body;
+  if (!id || !title || amount === undefined || !["income", "expense"].includes(type)) {
+    return res.status(400).json({ error: "id, title, amount, type required" });
+  }
+  const finalAmount = type === "income" ? Math.abs(Number(amount)) : -Math.abs(Number(amount));
+  if (!useDb) {
+    const idx = memory.transactions.findIndex((t) => t.id === id && t.user_id === req.userId);
+    if (idx === -1) return res.status(404).json({ error: "Not found" });
+    memory.transactions[idx] = {
+      ...memory.transactions[idx],
+      title,
+      category,
+      type,
+      amount: finalAmount,
+      occurred_on: occurred_on || memory.transactions[idx].occurred_on,
+    };
+    return res.json(memory.transactions[idx]);
+  }
+  const { rows } = await pool.query(
+    "UPDATE transactions SET title=$1, category=$2, type=$3, amount=$4, occurred_on=$5 WHERE id=$6 AND user_id=$7 RETURNING *",
+    [title, category, type, finalAmount, occurred_on || new Date(), id, req.userId]
+  );
+  if (rows.length === 0) return res.status(404).json({ error: "Not found" });
+  res.json(rows[0]);
+});
+
+app.delete("/transactions/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) return res.status(400).json({ error: "id required" });
+  if (!useDb) {
+    const idx = memory.transactions.findIndex((t) => t.id === id && t.user_id === req.userId);
+    if (idx === -1) return res.status(404).json({ error: "Not found" });
+    const removed = memory.transactions.splice(idx, 1)[0];
+    return res.json(removed);
+  }
+  const { rows } = await pool.query("DELETE FROM transactions WHERE id=$1 AND user_id=$2 RETURNING *", [id, req.userId]);
+  if (rows.length === 0) return res.status(404).json({ error: "Not found" });
   res.json(rows[0]);
 });
 
