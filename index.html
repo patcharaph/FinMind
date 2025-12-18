@@ -350,11 +350,11 @@
       </div>
     </div>
 
-    <div id="transactionModal" class="fixed inset-0 z-40 flex items-end justify-center bg-black/50 hidden">
-      <div class="bottom-sheet glass w-full max-w-md mx-auto rounded-t-3xl p-5 border border-white/10">
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="text-lg font-semibold text-white">Add Transaction</h3>
-          <button class="text-slate-400" data-close-transaction>&times;</button>
+      <div id="transactionModal" class="fixed inset-0 z-40 flex items-end justify-center bg-black/50 hidden">
+        <div class="bottom-sheet glass w-full max-w-md mx-auto rounded-t-3xl p-5 border border-white/10">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-lg font-semibold text-white">Add Transaction</h3>
+            <button class="text-slate-400" data-close-transaction>&times;</button>
         </div>
         <form id="transactionForm" class="space-y-3">
           <div class="grid grid-cols-2 gap-3">
@@ -376,16 +376,19 @@
               <input name="category" class="w-full mt-1 glass rounded-xl px-3 py-2 border border-white/10 text-white bg-white/5" placeholder="Salary, Food, Debt" />
             </label>
           </div>
-          <button class="w-full bg-gradient-to-r from-[#06b6d4] to-[#4f46e5] text-white font-semibold py-3 rounded-xl glow" type="submit">Save Transaction</button>
+          <div class="flex gap-3">
+            <button class="flex-1 bg-gradient-to-r from-[#06b6d4] to-[#4f46e5] text-white font-semibold py-3 rounded-xl glow" type="submit">Save Transaction</button>
+            <button id="transactionDelete" type="button" class="hidden px-4 py-3 rounded-xl border border-rose-400/60 text-rose-200 bg-rose-500/10 hover:bg-rose-500/20">Delete</button>
+          </div>
         </form>
       </div>
     </div>
 
-    <div id="assetModal" class="fixed inset-0 z-40 flex items-end justify-center bg-black/50 hidden">
-      <div class="bottom-sheet glass w-full max-w-md mx-auto rounded-t-3xl p-5 border border-white/10">
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="text-lg font-semibold text-white">Add Asset / Liability</h3>
-          <button class="text-slate-400" data-close-asset>&times;</button>
+      <div id="assetModal" class="fixed inset-0 z-40 flex items-end justify-center bg-black/50 hidden">
+        <div class="bottom-sheet glass w-full max-w-md mx-auto rounded-t-3xl p-5 border border-white/10">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-lg font-semibold text-white">Add Asset / Liability</h3>
+            <button class="text-slate-400" data-close-asset>&times;</button>
         </div>
         <form id="assetForm" class="space-y-3">
           <div class="grid grid-cols-2 gap-3">
@@ -407,7 +410,10 @@
               <input name="tag" class="w-full mt-1 glass rounded-xl px-3 py-2 border border-white/10 text-white bg-white/5" placeholder="Cash, DeFi, Debt" />
             </label>
           </div>
-          <button class="w-full bg-gradient-to-r from-[#10b981] to-[#06b6d4] text-white font-semibold py-3 rounded-xl glow" type="submit">Save Entry</button>
+          <div class="flex gap-3">
+            <button class="flex-1 bg-gradient-to-r from-[#10b981] to-[#06b6d4] text-white font-semibold py-3 rounded-xl glow" type="submit">Save Entry</button>
+            <button id="assetDelete" type="button" class="hidden px-4 py-3 rounded-xl border border-rose-400/60 text-rose-200 bg-rose-500/10 hover:bg-rose-500/20">Delete</button>
+          </div>
         </form>
       </div>
     </div>
@@ -866,28 +872,24 @@
       document.getElementById('liabilitiesTotal').textContent = formatCurrency(liabilityTotal);
 
       const assetList = state.assets.map((a, idx) => `
-        <div class="glass rounded-xl px-3 py-2 border border-white/5 flex items-center justify-between gap-3">
+        <div class="glass rounded-xl px-3 py-2 border border-white/5 flex items-center justify-between gap-3 cursor-pointer hover:border-white/15" data-kind="asset" data-index="${idx}">
           <div class="min-w-0">
             <p class="text-slate-100 truncate">${a.name}</p>
             <p class="text-xs text-slate-400 truncate">${a.tag || 'Asset'} · ${a.change || ''}</p>
           </div>
           <div class="flex items-center gap-2 shrink-0">
             <span class="text-emerald-300 font-semibold">${formatCurrency(a.value)}</span>
-            <button class="text-xs text-slate-300 hover:text-white" data-action="edit-asset" data-kind="asset" data-index="${idx}">Edit</button>
-            <button class="text-xs text-rose-300 hover:text-rose-100" data-action="delete-asset" data-kind="asset" data-index="${idx}">Del</button>
           </div>
         </div>
       `).join('');
       const liabilityList = state.liabilities.map((l, idx) => `
-        <div class="glass rounded-xl px-3 py-2 border border-white/5 flex items-center justify-between gap-3">
+        <div class="glass rounded-xl px-3 py-2 border border-white/5 flex items-center justify-between gap-3 cursor-pointer hover:border-white/15" data-kind="liability" data-index="${idx}">
           <div class="min-w-0">
             <p class="text-slate-100 truncate">${l.name}</p>
             <p class="text-xs text-slate-400 truncate">${l.tag || 'Liability'} · ${l.change || ''}</p>
           </div>
           <div class="flex items-center gap-2 shrink-0">
             <span class="text-rose-300 font-semibold">-${formatCurrency(l.value)}</span>
-            <button class="text-xs text-slate-300 hover:text-white" data-action="edit-asset" data-kind="liability" data-index="${idx}">Edit</button>
-            <button class="text-xs text-rose-300 hover:text-rose-100" data-action="delete-asset" data-kind="liability" data-index="${idx}">Del</button>
           </div>
         </div>
       `).join('');
@@ -898,15 +900,13 @@
     function renderHistory() {
       const history = state.transactions.map((t, idx) => {
         const color = t.type === 'income' ? 'text-emerald-300' : 'text-rose-300';
-        return `<div class="glass rounded-2xl p-3 border border-white/10 flex items-start justify-between gap-3">
+        return `<div class="glass rounded-2xl p-3 border border-white/10 flex items-start justify-between gap-3 cursor-pointer hover:border-white/15" data-index="${idx}">
           <div class="min-w-0">
             <p class="text-sm text-white truncate">${t.title}</p>
             <p class="text-xs text-slate-400 truncate">${t.category || 'General'} · ${t.date}</p>
           </div>
           <div class="flex items-center gap-2 shrink-0">
             <span class="${color} font-semibold">${t.type === 'income' ? '+' : '-'}${formatCurrency(Math.abs(t.amount))}</span>
-            <button class="text-xs text-slate-300 hover:text-white" data-action="edit-transaction" data-index="${idx}">Edit</button>
-            <button class="text-xs text-rose-300 hover:text-rose-100" data-action="delete-transaction" data-index="${idx}">Del</button>
           </div>
         </div>`;
       }).join('');
@@ -1083,6 +1083,7 @@
       const modal = document.getElementById('transactionModal');
       editingTransaction = editIndex;
       const form = document.getElementById('transactionForm');
+      const deleteBtn = document.getElementById('transactionDelete');
       const titleEl = modal.querySelector('h3');
       if (titleEl) titleEl.textContent = editingTransaction !== null ? 'Edit Transaction' : 'Add Transaction';
       if (editingTransaction !== null) {
@@ -1091,8 +1092,10 @@
         form.amount.value = Math.abs(t.amount);
         form.type.value = t.type;
         form.category.value = t.category || '';
+        if (deleteBtn) deleteBtn.classList.remove('hidden');
       } else {
         form.reset();
+        if (deleteBtn) deleteBtn.classList.add('hidden');
       }
       modal.classList.remove('hidden');
       setTimeout(() => modal.querySelector('.bottom-sheet').classList.remove('hidden'), 10);
@@ -1120,6 +1123,7 @@
       const modal = document.getElementById('assetModal');
       editingAsset = editIndex !== null ? { kind, index: editIndex } : null;
       const form = document.getElementById('assetForm');
+      const deleteBtn = document.getElementById('assetDelete');
       const titleEl = modal.querySelector('h3');
       form.kind.value = kind;
       if (editingAsset) {
@@ -1128,10 +1132,12 @@
         form.name.value = entry.name || '';
         form.value.value = entry.value;
         form.tag.value = entry.tag || '';
+        if (deleteBtn) deleteBtn.classList.remove('hidden');
       } else {
         if (titleEl) titleEl.textContent = 'Add Asset / Liability';
         form.reset();
         form.kind.value = kind;
+        if (deleteBtn) deleteBtn.classList.add('hidden');
       }
       styleKindSelect();
       form.kind.addEventListener('change', styleKindSelect);
@@ -1241,6 +1247,15 @@
       renderHistory();
       renderAdvisor();
     });
+    document.getElementById('transactionDelete').addEventListener('click', async () => {
+      if (editingTransaction === null) return;
+      const existing = state.transactions[editingTransaction];
+      if (!existing) return;
+      const confirmed = window.confirm('Delete this transaction?');
+      if (!confirmed) return;
+      deleteTransaction(editingTransaction);
+      closeTransactionModal();
+    });
 
     document.getElementById('assetForm').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -1293,6 +1308,13 @@
       renderAssets();
       renderDashboard();
       renderAdvisor();
+    });
+    document.getElementById('assetDelete').addEventListener('click', async () => {
+      if (!editingAsset) return;
+      const confirmed = window.confirm('Delete this entry?');
+      if (!confirmed) return;
+      deleteAsset(editingAsset.kind, editingAsset.index);
+      closeAssetModal();
     });
 
     document.querySelectorAll('[data-close-transaction]').forEach(btn => btn.addEventListener('click', closeTransactionModal));
@@ -1386,36 +1408,22 @@
       }
     });
     document.getElementById('assetList').addEventListener('click', (e) => {
-      const btn = e.target.closest('button[data-action]');
-      if (!btn) return;
-      const { action, kind, index } = btn.dataset;
-      const idx = Number(index);
-      if (action === 'edit-asset') {
-        openAssetModal(kind, idx);
-      } else if (action === 'delete-asset') {
-        deleteAsset(kind, idx);
-      }
+      const card = e.target.closest('[data-kind][data-index]');
+      if (!card) return;
+      const { kind, index } = card.dataset;
+      openAssetModal(kind, Number(index));
     });
     document.getElementById('liabilityList').addEventListener('click', (e) => {
-      const btn = e.target.closest('button[data-action]');
-      if (!btn) return;
-      const { action, kind, index } = btn.dataset;
-      const idx = Number(index);
-      if (action === 'edit-asset') {
-        openAssetModal(kind, idx);
-      } else if (action === 'delete-asset') {
-        deleteAsset(kind, idx);
-      }
+      const card = e.target.closest('[data-kind][data-index]');
+      if (!card) return;
+      const { kind, index } = card.dataset;
+      openAssetModal(kind, Number(index));
     });
     document.getElementById('historyList').addEventListener('click', (e) => {
-      const btn = e.target.closest('button[data-action]');
-      if (!btn) return;
-      const idx = Number(btn.dataset.index);
-      if (btn.dataset.action === 'edit-transaction') {
-        openTransactionModal(idx);
-      } else if (btn.dataset.action === 'delete-transaction') {
-        deleteTransaction(idx);
-      }
+      const card = e.target.closest('[data-index]');
+      if (!card) return;
+      const idx = Number(card.dataset.index);
+      openTransactionModal(idx);
     });
     quickAddTransaction?.addEventListener('click', () => { closeAddChooser(); openTransactionModal(); });
     quickAddAsset?.addEventListener('click', () => { closeAddChooser(); openAssetModal('asset'); });
