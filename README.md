@@ -23,8 +23,8 @@ Mobile-first **Dark Neon Glassmorphism** web app for tracking assets, liabilitie
 
 ### Pricing Tiers
 - **Free**: Unlimited transactions; assets+liabilities capped at 5; Advisor teaser (sample insight only); export/backup + deep insights locked.
-- **Plus** (main paid): Unlimited assets/liabilities; full Advisor rule-based insights; AI advice quota 20/mo; CSV export/backup. Suggested: $1/mo or $10/yr.
-- **Prime** (power users): Everything in Plus; AI advice 200/mo; premium themes/glass; advanced insights (payoff plans, what-if, runway). Suggested: $2/mo or $20/yr.
+- **Plus** (main paid): Unlimited assets/liabilities; full Advisor rule-based insights; AI advice quota 10/mo; CSV export/backup. Suggested: $1/mo or $10/yr.
+- **Prime** (power users): Everything in Plus; AI advice 30/mo; premium themes/glass; advanced insights (payoff plans, what-if, runway). Suggested: $2/mo or $20/yr.
 - **Trial**: 7-day local trial unlocks premium features client-side; expires via `localStorage` timestamp unless backend `plan` is premium.
 
 ### Paywall Behavior
