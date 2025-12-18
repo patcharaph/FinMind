@@ -16,6 +16,7 @@
       --neon-red: #ef4444;
       --neon-cyan: #06b6d4;
       --glass: rgba(255, 255, 255, 0.06);
+      --chip-border: rgba(255, 255, 255, 0.12);
     }
     body {
       background: radial-gradient(circle at 20% 20%, rgba(217, 70, 239, 0.1), transparent 20%),
@@ -44,6 +45,45 @@
     }
     .float-soft {
       animation: float 6s ease-in-out infinite;
+    }
+    .tier-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 14px;
+      border-radius: 9999px;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--chip-border);
+      color: #e5e7eb;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+    .tier-chip.prime {
+      background: linear-gradient(120deg, rgba(217,70,239,0.22), rgba(6,182,212,0.22));
+      border-color: rgba(217,70,239,0.35);
+      color: #f8fafc;
+      box-shadow: 0 15px 38px rgba(217,70,239,0.25), 0 12px 32px rgba(6,182,212,0.25);
+    }
+    .tier-chip .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 9999px;
+      background: linear-gradient(135deg, #d946ef, #06b6d4);
+      box-shadow: 0 0 12px rgba(217,70,239,0.5);
+    }
+    .advisor-emblem {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: radial-gradient(circle at 35% 35%, rgba(217,70,239,0.35), transparent 45%),
+                  radial-gradient(circle at 70% 70%, rgba(79,70,229,0.28), transparent 55%),
+                  linear-gradient(145deg, rgba(217,70,239,0.8), rgba(6,182,212,0.8));
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 0 25px rgba(217, 70, 239, 0.35), 0 10px 28px rgba(0,0,0,0.45);
+      display: grid;
+      place-items: center;
     }
     .glow {
       box-shadow: 0 0 20px rgba(217, 70, 239, 0.3), 0 0 40px rgba(79, 70, 229, 0.2);
@@ -139,8 +179,9 @@
           <button id="authButton" class="text-xs text-slate-200 px-3 py-1 rounded-full border border-white/10 glass hover:border-white/20 transition">Sign In</button>
           <button id="signOutButton" class="text-xs text-slate-300 px-3 py-1 rounded-full border border-white/10 glass hover:border-white/20 transition hidden">Sign Out</button>
         </div>
-        <div id="tierBadge" class="glass rounded-full px-3 py-1 text-xs uppercase tracking-[0.14em] text-slate-200 border border-white/10">
-          FinMind v1.0
+        <div id="tierBadge" class="tier-chip tier-chip-free">
+          <span class="dot"></span>
+          <span class="label">FinMind v1.0</span>
         </div>
       </div>
     </header>
@@ -234,11 +275,12 @@
             <p class="text-sm text-slate-200">Agentic AI Advisor</p>
             <p class="text-xs text-slate-400">Guardian · Strategist · Analyst</p>
           </div>
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#d946ef] to-[#4f46e5] flex items-center justify-center text-white glow">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" d="M12 6a9 9 0 100 12 9 9 0 000-12zm0 0l3 3m-3-3l-3 3" />
-            </svg>
-          </div>
+        <div class="advisor-emblem">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white/90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4l7 4v4c0 4.418-3.134 8-7 8s-7-3.582-7-8V8l7-4z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.5 12.5l1.8 1.8L15 10" />
+          </svg>
+        </div>
         </div>
         <div class="glass rounded-2xl p-4 border border-white/10 min-h-[260px] relative overflow-hidden">
           <div id="advisorLock" class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-black/65 backdrop-blur-md border border-fuchsia-400/30 rounded-2xl text-center px-4 hidden">
@@ -579,10 +621,20 @@
     const quickAddLiability = document.getElementById('quickAddLiability');
     let activeSection = 'home';
     let advisorTimer = null;
+    let advisorLoading = false;
+    let advisorError = '';
+    let advisorData = null; // { metrics, rules, llm_advice }
     let editingAsset = null; // { kind: 'asset'|'liability', index: number }
     let editingTransaction = null; // number index in state.transactions
     let authMode = 'login';
     let refreshing = false;
+
+    function resetAdvisorCache() {
+      advisorData = null;
+      advisorError = '';
+      advisorLoading = false;
+      if (advisorStream) advisorStream.innerHTML = '';
+    }
 
     function updateDisplayName() {
       if (!displayNameEl) return;
@@ -619,6 +671,7 @@
         state.assets = assets;
         state.liabilities = liabilities;
         state.transactions = transactions.map(t => ({ ...t, date: t.occurred_on || t.date }));
+        resetAdvisorCache();
       } catch (err) {
         console.error('API sync failed, falling back to local state', err);
         if ((err.message || '').toLowerCase().includes('unauthorized')) {
@@ -648,16 +701,18 @@
         document.body.classList.remove('prime-mode');
       }
 
+      tierBadge.classList.remove('tier-chip-prime', 'tier-chip-free');
+      let label = 'FinMind v1.0';
       if (isPrime) {
-        let label = 'FinMind Plus';
         if (primeStyle && hasActiveTrial()) label = 'FinMind Prime (Trial)';
         else if (primeStyle) label = 'FinMind Prime';
-        tierBadge.textContent = label;
-        tierBadge.classList.add('bg-gradient-to-r', 'from-[#d946ef]/20', 'to-[#06b6d4]/20', 'text-white');
+        else label = 'FinMind Plus';
+        tierBadge.classList.add('tier-chip-prime');
       } else {
-        tierBadge.textContent = 'FinMind v1.0';
-        tierBadge.classList.remove('bg-gradient-to-r', 'from-[#d946ef]/20', 'to-[#06b6d4]/20', 'text-white');
+        tierBadge.classList.add('tier-chip-free');
       }
+      const labelEl = tierBadge.querySelector('.label');
+      if (labelEl) labelEl.textContent = label;
     }
 
     function openPaywall(message = paywallReason) {
@@ -696,6 +751,7 @@
         localStorage.removeItem('finmind_token');
         localStorage.removeItem('finmind_user');
       }
+      resetAdvisorCache();
       isPrime = premiumActive();
       setPrimeVisuals();
       updateAuthButton();
@@ -857,6 +913,22 @@
       document.getElementById('historyList').innerHTML = history || '<p class="text-slate-400 text-sm">No history yet.</p>';
     }
 
+    async function loadAdvisorInsights() {
+      if (!useApi || !authToken || advisorLoading) return;
+      advisorLoading = true;
+      advisorError = '';
+      renderAdvisor();
+      try {
+        advisorData = await api('/advisor/insights?period=last_90d&lang=en');
+      } catch (err) {
+        advisorError = err?.message || 'Failed to load advisor insights';
+        advisorData = null;
+      } finally {
+        advisorLoading = false;
+        renderAdvisor();
+      }
+    }
+
     function renderAdvisor() {
       premiumActive();
       advisorStream.innerHTML = '';
@@ -876,6 +948,71 @@
         return;
       }
       if (advisorLock) advisorLock.classList.add('hidden');
+      const shouldFetchApi = useApi && authToken && !advisorData && !advisorLoading;
+      if (shouldFetchApi) loadAdvisorInsights();
+
+      if (useApi && authToken) {
+        if (advisorLoading) {
+          advisorStream.innerHTML = `
+            <div class="glass rounded-2xl p-3 border border-white/10 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="flex items-center space-x-1 typing-dots"><div></div><div></div><div></div></div>
+                <p class="text-sm text-slate-200">Fetching advisor insights...</p>
+              </div>
+            </div>
+          `;
+          return;
+        }
+        if (advisorData) {
+          const rules = advisorData.rules || [];
+          const llm = advisorData.llm_advice;
+          const cards = [];
+          if (llm) {
+            cards.push(`
+              <div class="glass rounded-2xl p-3 border border-cyan-400/70 shadow-[0_0_25px_rgba(6,182,212,0.35)] fade-in-up">
+                <div class="flex items-center justify-between mb-1">
+                  <p class="text-xs uppercase tracking-[0.14em] text-white/70">AI Advisor</p>
+                  <span class="text-[10px] text-cyan-200">LLM</span>
+                </div>
+                <p class="text-slate-200 leading-relaxed">${llm}</p>
+              </div>
+            `);
+          }
+          if (rules.length) {
+            cards.push(rules.map((r) => {
+              const toneMap = {
+                critical: 'border-rose-400/70 shadow-[0_0_25px_rgba(239,68,68,0.35)]',
+                warning: 'border-amber-400/70 shadow-[0_0_25px_rgba(251,191,36,0.35)]',
+                info: 'border-cyan-400/70 shadow-[0_0_25px_rgba(6,182,212,0.35)]'
+              };
+              const border = toneMap[r.severity] || 'border-fuchsia-400/70 shadow-[0_0_25px_rgba(217,70,239,0.35)]';
+              return `
+                <div class="glass rounded-2xl p-3 border ${border} fade-in-up">
+                  <div class="flex items-center justify-between mb-1">
+                    <p class="text-xs uppercase tracking-[0.14em] text-white/70">${r.title}</p>
+                    <span class="text-[10px] text-slate-300">${r.severity}</span>
+                  </div>
+                  <p class="text-slate-200 leading-relaxed">${r.message}</p>
+                </div>
+              `;
+            }).join(''));
+          }
+          if (!cards.length) {
+            cards.push('<p class="text-slate-400 text-sm">No advisor insights yet.</p>');
+          }
+          advisorStream.innerHTML = cards.join('');
+          return;
+        }
+        if (advisorError) {
+          advisorStream.innerHTML = `
+            <div class="glass rounded-2xl p-3 border border-amber-400/50 text-slate-200">
+              <p class="text-sm font-semibold mb-1">Advisor unavailable</p>
+              <p class="text-xs text-slate-300">${advisorError}</p>
+            </div>
+          `;
+        }
+      }
+
       const { assetTotal, liabilityTotal, incomeTotal, expenseTotal, netWorth, cash } = calcTotals();
       const debtRatio = liabilityTotal / Math.max(assetTotal, 1);
       const insights = [];
@@ -1017,6 +1154,7 @@
       } else {
         state.liabilities.splice(index, 1);
       }
+      resetAdvisorCache();
       renderAssets();
       renderDashboard();
       renderAdvisor();
@@ -1027,6 +1165,7 @@
         console.warn('Delete not wired to API in this demo; updating local state only.');
       }
       state.transactions.splice(index, 1);
+      resetAdvisorCache();
       renderDashboard();
       renderHistory();
       renderAdvisor();
@@ -1066,6 +1205,7 @@
         } else {
           state.transactions.unshift(entry);
         }
+        resetAdvisorCache();
       }
       form.reset();
       closeTransactionModal();
@@ -1116,6 +1256,7 @@
             state.liabilities.push(entry);
           }
         }
+        resetAdvisorCache();
       }
       form.reset();
       closeAssetModal();
