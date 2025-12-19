@@ -200,14 +200,14 @@
         </div>
       </div>
       <div class="flex flex-col items-end gap-2 shrink-0">
-        <div class="flex items-center gap-2">
-          <button id="signOutButton" class="text-xs text-white/50 hover:text-white transition hidden">Sign Out</button>
-          <div id="tierBadge" class="tier-chip tier-chip-free">
-            <span class="dot"></span>
-            <span class="label">FinMind v1.0</span>
-          </div>
+        <div id="tierBadge" class="tier-chip tier-chip-free">
+          <span class="dot"></span>
+          <span class="label">FinMind v1.0</span>
         </div>
-        <button id="authButton" class="neon-signin text-xs px-3 py-1 rounded-full hidden">Sign In</button>
+        <div class="flex items-center gap-2">
+          <button id="authButton" class="neon-signin text-xs px-3 py-1 rounded-full hidden">Sign In</button>
+          <button id="signOutButton" class="text-xs text-white/70 hover:text-white transition hidden">Sign Out</button>
+        </div>
       </div>
     </header>
     <div id="trialBanner" class="glass rounded-xl border border-white/10 px-3 py-2 mb-4 hidden">
