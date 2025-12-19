@@ -55,10 +55,14 @@ async function initDb() {
       display_name TEXT,
       plan TEXT DEFAULT 'free',
       password_hash TEXT,
+      trial_started_at TIMESTAMPTZ DEFAULT now(),
+      trial_expires_at TIMESTAMPTZ,
       created_at TIMESTAMPTZ DEFAULT now()
     );
     ALTER TABLE users ADD COLUMN IF NOT EXISTS plan TEXT DEFAULT 'free';
     ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS trial_started_at TIMESTAMPTZ DEFAULT now();
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS trial_expires_at TIMESTAMPTZ;
     CREATE TABLE IF NOT EXISTS assets (
       id SERIAL PRIMARY KEY,
       user_id INT REFERENCES users(id) ON DELETE CASCADE,
@@ -97,6 +101,8 @@ const memory = {
       email: "demo@finmind.ai",
       display_name: "Demo User",
       plan: "free",
+      trial_started_at: new Date().toISOString(),
+      trial_expires_at: null,
       password_hash: bcrypt.hashSync("demo123", 8),
       created_at: new Date().toISOString(),
     },
@@ -124,9 +130,21 @@ const memory = {
 async function getUserById(id) {
   if (!useDb) {
     const u = memory.users.find((u) => u.id === id);
-    return u ? { id: u.id, email: u.email, display_name: u.display_name, plan: u.plan || "free" } : null;
+    return u
+      ? {
+          id: u.id,
+          email: u.email,
+          display_name: u.display_name,
+          plan: u.plan || "free",
+          trial_started_at: u.trial_started_at,
+          trial_expires_at: u.trial_expires_at,
+        }
+      : null;
   }
-  const { rows } = await pool.query("SELECT id, email, display_name, plan FROM users WHERE id = $1", [id]);
+  const { rows } = await pool.query(
+    "SELECT id, email, display_name, plan, trial_started_at, trial_expires_at FROM users WHERE id = $1",
+    [id]
+  );
   return rows[0] || null;
 }
 
@@ -145,13 +163,26 @@ async function createUser({ email, password, display_name, plan = "free" }) {
     const exists = memory.users.some((u) => u.email.toLowerCase() === email.toLowerCase());
     if (exists) throw new Error("Email already exists");
     const id = memory.users.length + 1;
-    const user = { id, email, display_name, plan, password_hash, created_at: new Date().toISOString() };
+    const now = new Date();
+    const trialExpires = plan === "prime" ? null : new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    const user = {
+      id,
+      email,
+      display_name,
+      plan: plan || "trial",
+      password_hash,
+      trial_started_at: now.toISOString(),
+      trial_expires_at: trialExpires,
+      created_at: now.toISOString(),
+    };
     memory.users.push(user);
-    return { id, email, display_name, plan };
+    return { id, email, display_name, plan: user.plan, trial_started_at: user.trial_started_at, trial_expires_at: user.trial_expires_at };
   }
+  const trialExpires = plan === "prime" ? null : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const finalPlan = plan || "trial";
   const { rows } = await pool.query(
-    "INSERT INTO users (email, display_name, plan, password_hash) VALUES ($1,$2,$3,$4) RETURNING id, email, display_name, plan",
-    [email, display_name, plan, password_hash]
+    "INSERT INTO users (email, display_name, plan, password_hash, trial_started_at, trial_expires_at) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, email, display_name, plan, trial_started_at, trial_expires_at",
+    [email, display_name, finalPlan, password_hash, new Date(), trialExpires]
   );
   return rows[0];
 }
@@ -210,7 +241,14 @@ app.post("/auth/login", async (req, res) => {
   if (!user || !user.password_hash) return res.status(401).json({ error: "invalid credentials" });
   const ok = await bcrypt.compare(password, user.password_hash);
   if (!ok) return res.status(401).json({ error: "invalid credentials" });
-  const safeUser = { id: user.id, email: user.email, display_name: user.display_name, plan: user.plan || "free" };
+  const safeUser = {
+    id: user.id,
+    email: user.email,
+    display_name: user.display_name,
+    plan: user.plan || "free",
+    trial_started_at: user.trial_started_at,
+    trial_expires_at: user.trial_expires_at,
+  };
   const token = signToken(safeUser);
   res.json({ token, user: safeUser });
 });
@@ -243,6 +281,36 @@ app.get("/me", async (req, res) => {
   const user = await getUserById(req.userId);
   if (!user) return res.status(404).json({ error: "User not found" });
   res.json(user);
+});
+
+app.put("/me", async (req, res) => {
+  if (!req.userId) return res.status(401).json({ error: "Unauthorized" });
+  const { display_name } = req.body || {};
+  if (!display_name || display_name.length < 2) return res.status(400).json({ error: "display_name too short" });
+  try {
+    if (!useDb) {
+      const user = memory.users.find((u) => u.id === req.userId);
+      if (!user) return res.status(404).json({ error: "User not found" });
+      user.display_name = display_name;
+      return res.json({
+        id: user.id,
+        email: user.email,
+        display_name: user.display_name,
+        plan: user.plan || "free",
+        trial_started_at: user.trial_started_at,
+        trial_expires_at: user.trial_expires_at,
+      });
+    }
+    const { rows } = await pool.query(
+      "UPDATE users SET display_name = $1 WHERE id = $2 RETURNING id, email, display_name, plan, trial_started_at, trial_expires_at",
+      [display_name, req.userId]
+    );
+    const user = rows[0];
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json(user);
+  } catch (err) {
+    res.status(400).json({ error: err.message || "update failed" });
+  }
 });
 
 app.get("/summary", async (req, res) => {

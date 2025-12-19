@@ -173,10 +173,12 @@
       <div>
         <p class="text-sm text-slate-400">Welcome back,</p>
         <h1 id="displayName" class="text-2xl font-semibold text-white">Aurora Reyes</h1>
+        <p id="displayEmail" class="text-xs text-slate-400">patcharaph@gmail.com</p>
       </div>
       <div class="flex items-center gap-2">
         <div class="flex items-center gap-2">
           <button id="authButton" class="text-xs text-slate-200 px-3 py-1 rounded-full border border-white/10 glass hover:border-white/20 transition">Sign In</button>
+          <button id="profileButton" class="text-xs text-slate-200 px-3 py-1 rounded-full border border-white/10 glass hover:border-white/20 transition hidden">Profile</button>
           <button id="signOutButton" class="text-xs text-slate-300 px-3 py-1 rounded-full border border-white/10 glass hover:border-white/20 transition hidden">Sign Out</button>
         </div>
         <div id="tierBadge" class="tier-chip tier-chip-free">
@@ -185,6 +187,10 @@
         </div>
       </div>
     </header>
+    <div id="trialBanner" class="glass rounded-xl border border-white/10 px-3 py-2 mb-4 hidden">
+      <p class="text-xs text-slate-300">Free Trial</p>
+      <p class="text-sm text-white font-semibold" id="trialStatus">7 days left</p>
+    </div>
 
     <main class="space-y-4">
       <section id="home" data-section class="space-y-4">
@@ -350,11 +356,11 @@
       </div>
     </div>
 
-      <div id="transactionModal" class="fixed inset-0 z-40 flex items-end justify-center bg-black/50 hidden">
-        <div class="bottom-sheet glass w-full max-w-md mx-auto rounded-t-3xl p-5 border border-white/10">
-          <div class="flex items-center justify-between mb-3">
-            <h3 class="text-lg font-semibold text-white">Add Transaction</h3>
-            <button class="text-slate-400" data-close-transaction>&times;</button>
+    <div id="transactionModal" class="fixed inset-0 z-40 flex items-end justify-center bg-black/50 hidden">
+      <div class="bottom-sheet glass w-full max-w-md mx-auto rounded-t-3xl p-5 border border-white/10">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-lg font-semibold text-white">Add Transaction</h3>
+          <button class="text-slate-400" data-close-transaction>&times;</button>
         </div>
         <form id="transactionForm" class="space-y-3">
           <div class="grid grid-cols-2 gap-3">
@@ -384,6 +390,37 @@
       </div>
     </div>
 
+    <div id="profileModal" class="fixed inset-0 z-40 flex items-end justify-center bg-black/50 hidden">
+      <div class="bottom-sheet glass w-full max-w-md mx-auto rounded-t-3xl p-5 border border-white/10">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-lg font-semibold text-white">Profile</h3>
+          <button class="text-slate-400" data-close-profile>&times;</button>
+        </div>
+        <div class="space-y-3 text-sm text-slate-200">
+          <div class="glass rounded-xl p-3 border border-white/10">
+            <p class="text-xs uppercase tracking-[0.12em] text-white/60">Email</p>
+            <p id="profileEmail" class="text-white font-semibold">-</p>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="glass rounded-xl p-3 border border-white/10">
+              <p class="text-xs uppercase tracking-[0.12em] text-white/60">Plan</p>
+              <p id="profilePlan" class="text-white font-semibold">free</p>
+            </div>
+            <div class="glass rounded-xl p-3 border border-white/10">
+              <p class="text-xs uppercase tracking-[0.12em] text-white/60">Trial</p>
+              <p id="profileTrial" class="text-white font-semibold">-</p>
+            </div>
+          </div>
+          <form id="profileForm" class="space-y-3">
+            <label class="text-sm text-slate-300 block">Display name
+              <input required name="display_name" class="w-full mt-1 glass rounded-xl px-3 py-2 border border-white/10 text-white bg-white/5" placeholder="Your name" />
+            </label>
+            <button class="w-full bg-gradient-to-r from-[#d946ef] via-[#7c3aed] to-[#06b6d4] text-white font-semibold py-3 rounded-xl prime-cta" type="submit">Save</button>
+          </form>
+          <p id="profileStatus" class="text-xs text-emerald-300 hidden">Saved</p>
+        </div>
+      </div>
+    </div>
       <div id="assetModal" class="fixed inset-0 z-40 flex items-end justify-center bg-black/50 hidden">
         <div class="bottom-sheet glass w-full max-w-md mx-auto rounded-t-3xl p-5 border border-white/10">
           <div class="flex items-center justify-between mb-3">
@@ -568,7 +605,9 @@
     let currentPlan = currentUser?.plan || 'free';
     let isPrime = false;
     const hasActiveTrial = () => {
-      const expiry = Number(localStorage.getItem(TRIAL_KEY) || '0');
+      const localExpiry = Number(localStorage.getItem(TRIAL_KEY) || '0');
+      const serverExpiry = currentUser?.trial_expires_at ? new Date(currentUser.trial_expires_at).getTime() : 0;
+      const expiry = Math.max(localExpiry, serverExpiry);
       if (!expiry) return false;
       if (expiry > Date.now()) return true;
       localStorage.removeItem(TRIAL_KEY);
@@ -615,6 +654,17 @@
     const authButton = document.getElementById('authButton');
     const signOutButton = document.getElementById('signOutButton');
     const displayNameEl = document.getElementById('displayName');
+    const displayEmailEl = document.getElementById('displayEmail');
+    const trialBanner = document.getElementById('trialBanner');
+    const trialStatusEl = document.getElementById('trialStatus');
+    const planField = document.getElementById('planField');
+    const profileButton = document.getElementById('profileButton');
+    const profileModal = document.getElementById('profileModal');
+    const profileEmail = document.getElementById('profileEmail');
+    const profilePlan = document.getElementById('profilePlan');
+    const profileTrial = document.getElementById('profileTrial');
+    const profileForm = document.getElementById('profileForm');
+    const profileStatus = document.getElementById('profileStatus');
     const authModeSignIn = document.getElementById('authModeSignIn');
     const authModeSignUp = document.getElementById('authModeSignUp');
     const displayNameField = document.getElementById('displayNameField');
@@ -646,6 +696,39 @@
       if (!displayNameEl) return;
       const name = currentUser?.display_name || currentUser?.email || 'FinMind User';
       displayNameEl.textContent = name;
+    }
+
+    function updateDisplayEmail() {
+      if (!displayEmailEl) return;
+      displayEmailEl.textContent = currentUser?.email || 'Not signed in';
+    }
+
+    function formatTrialStatus(user) {
+      if (!user) return '-';
+      if (user.plan === 'prime') return 'Prime';
+      if (user.plan === 'trial' && user.trial_expires_at) {
+        const expires = new Date(user.trial_expires_at);
+        const now = new Date();
+        const daysLeft = Math.max(0, Math.ceil((expires - now) / (1000 * 60 * 60 * 24)));
+        return daysLeft > 0 ? `${daysLeft} days left` : 'Expired';
+      }
+      return user.plan || 'free';
+    }
+
+    function updateProfileUI() {
+      if (profileEmail) profileEmail.textContent = currentUser?.email || '-';
+      if (profilePlan) profilePlan.textContent = currentUser?.plan || 'free';
+      if (profileTrial) profileTrial.textContent = formatTrialStatus(currentUser);
+      if (profileForm?.display_name) profileForm.display_name.value = currentUser?.display_name || '';
+      if (profileButton) profileButton.classList.toggle('hidden', !(authToken && currentUser));
+      if (trialBanner && trialStatusEl) {
+        const status = formatTrialStatus(currentUser);
+        const show = currentUser?.plan === 'trial' || status === 'Expired' || status.includes('days');
+        trialBanner.classList.toggle('hidden', !show);
+        trialStatusEl.textContent = status;
+      }
+      updateDisplayName();
+      updateDisplayEmail();
     }
 
     const api = async (path, options = {}) => {
@@ -762,7 +845,7 @@
       setPrimeVisuals();
       updateAuthButton();
       updateSignOutVisibility();
-      updateDisplayName();
+      updateProfileUI();
     }
 
     function updateAuthButton() {
@@ -806,6 +889,19 @@
       if (!addChooser) return;
       addChooser.querySelector('.bottom-sheet')?.classList.add('hidden');
       setTimeout(() => addChooser.classList.add('hidden'), 200);
+    }
+
+    function openProfileModal() {
+      if (!profileModal) return;
+      updateProfileUI();
+      profileModal.classList.remove('hidden');
+      setTimeout(() => profileModal.querySelector('.bottom-sheet')?.classList.remove('hidden'), 10);
+    }
+    function closeProfileModal() {
+      if (!profileModal) return;
+      profileModal.querySelector('.bottom-sheet')?.classList.add('hidden');
+      setTimeout(() => profileModal.classList.add('hidden'), 200);
+      if (profileStatus) profileStatus.classList.add('hidden');
     }
 
     function setRefreshing(state) {
@@ -1327,6 +1423,8 @@
     document.getElementById('paywallModal').addEventListener('click', (e) => { if (e.target.id === 'paywallModal') closePaywall(); });
     addChooser?.addEventListener('click', (e) => { if (e.target.id === 'addChooser') closeAddChooser(); });
     document.querySelector('[data-close-add]')?.addEventListener('click', closeAddChooser);
+    profileModal?.addEventListener('click', (e) => { if (e.target.id === 'profileModal') closeProfileModal(); });
+    document.querySelector('[data-close-profile]')?.addEventListener('click', closeProfileModal);
 
     navButtons.forEach(btn => btn.addEventListener('click', () => switchSection(btn.dataset.target)));
     document.getElementById('analyzeCTA').addEventListener('click', () => checkPrimeStatus('Unlock AI Advisor to generate live intelligence.'));
@@ -1354,7 +1452,7 @@
       const email = form.email.value.trim();
       const password = form.password.value;
       const display_name = form.display_name?.value.trim();
-      const plan = form.plan?.value || 'free';
+      const plan = form.plan?.value || 'trial';
       if (!useApi) {
         if (authErrorEl) {
           authErrorEl.textContent = `Serve over http(s) or set API_URL (default ${DEFAULT_API}) to sign in.`;
@@ -1428,6 +1526,37 @@
     quickAddTransaction?.addEventListener('click', () => { closeAddChooser(); openTransactionModal(); });
     quickAddAsset?.addEventListener('click', () => { closeAddChooser(); openAssetModal('asset'); });
     quickAddLiability?.addEventListener('click', () => { closeAddChooser(); openAssetModal('liability'); });
+    profileButton?.addEventListener('click', openProfileModal);
+    profileForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!useApi) {
+        if (authErrorEl) {
+          authErrorEl.textContent = 'Profile changes require API mode. Set API_URL and sign in.';
+          authErrorEl.classList.remove('hidden');
+        }
+        return;
+      }
+      try {
+        const display_name = profileForm.display_name.value.trim();
+        if (!display_name) return;
+        const user = await api('/me', { method: 'PUT', body: JSON.stringify({ display_name }) });
+        setAuth(authToken, user);
+        if (profileStatus) {
+          profileStatus.textContent = 'Saved';
+          profileStatus.classList.remove('hidden');
+          profileStatus.classList.remove('text-rose-300');
+          profileStatus.classList.add('text-emerald-300');
+        }
+      } catch (err) {
+        console.error('Update profile failed', err);
+        if (profileStatus) {
+          profileStatus.textContent = err.message || 'Save failed';
+          profileStatus.classList.remove('hidden');
+          profileStatus.classList.remove('text-emerald-300');
+          profileStatus.classList.add('text-rose-300');
+        }
+      }
+    });
 
     async function bootstrap() {
       updateAuthButton();
@@ -1436,7 +1565,7 @@
         await hydrateUser();
         await syncFromApi();
       }
-      updateDisplayName();
+      updateProfileUI();
       setAuthMode('login');
       setPrimeVisuals();
       renderDashboard();
