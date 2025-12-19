@@ -176,6 +176,21 @@
       box-shadow: 0 0 16px rgba(34, 211, 238, 0.55), 0 0 36px rgba(168, 85, 247, 0.35);
       transform: translateY(-1px);
     }
+    .neon-gold {
+      color: #fff7d6;
+      background: linear-gradient(120deg, rgba(255, 214, 102, 0.35), rgba(245, 158, 11, 0.28));
+      border: 1px solid rgba(255, 214, 102, 0.85);
+      box-shadow: 0 0 20px rgba(255, 214, 102, 0.75), 0 0 46px rgba(245, 158, 11, 0.6);
+      animation: goldFloat 2.2s ease-in-out infinite;
+    }
+    .neon-gold:hover {
+      box-shadow: 0 0 28px rgba(255, 214, 102, 0.95), 0 0 60px rgba(245, 158, 11, 0.75);
+      transform: translateY(-2px);
+    }
+    @keyframes goldFloat {
+      0%, 100% { opacity: 0.88; transform: translateY(0px); }
+      50% { opacity: 1; transform: translateY(-2px); }
+    }
     @keyframes neonPulse {
       0%, 100% { opacity: 0.85; transform: translateY(0px); }
       50% { opacity: 1; transform: translateY(-1px); }
@@ -193,7 +208,7 @@
         <div class="min-w-0">
           <p class="text-xs uppercase tracking-[0.22em] text-white/50">Welcome back</p>
           <h1 id="displayName" class="text-xl font-semibold text-white truncate">Aurora Reyes</h1>
-          <p id="displayEmail" class="text-xs text-white/50 truncate">patcharaph@gmail.com</p>
+          <p id="displayEmail" class="text-xs text-white/50 truncate hidden"></p>
           <div class="mt-2 flex items-center gap-3">
             <button id="profileButton" class="text-xs text-white/70 hover:text-white transition hidden">Edit profile</button>
           </div>
@@ -524,6 +539,7 @@
                   <p>AI Advisor: Teaser only</p>
                 </div>
               </div>
+              <button id="startTrial" class="mt-4 w-full border border-white/15 text-white/80 py-2 rounded-xl hover:border-white/30 hover:text-white transition">Start 7-Day Free Trial</button>
             </div>
 
             <div class="glass rounded-2xl p-4 border border-fuchsia-400/40 shadow-[0_0_30px_rgba(217,70,239,0.25)]">
@@ -568,7 +584,7 @@
               <div class="mt-3 space-y-2 text-white text-sm">
                 <p>Advanced scenarios + premium theme + priority advisor.</p>
               </div>
-              <button class="mt-4 w-full border border-white/20 text-white py-3 rounded-xl hover:border-white/40 transition">Go Prime</button>
+              <button class="mt-4 w-full neon-gold py-3 rounded-xl transition">Go Prime</button>
             </div>
 
             <div class="text-xs text-slate-400 text-center">
@@ -663,20 +679,27 @@
     let paywallReason = 'Experience full AI wealth intelligence, premium visuals, and unlimited growth.';
     const state = {
       assets: [
-        { name: 'Crypto Portfolio', value: 42000, tag: 'DeFi', change: '+4.6%' },
-        { name: 'Cash Reserve', value: 15000, tag: 'Cash', change: '+0.2%' }
+        { name: 'Global Equity Fund', value: 62000, tag: 'ETF', change: '+3.1%' },
+        { name: 'Cash Reserve', value: 18000, tag: 'Cash', change: '+0.4%' },
+        { name: 'Startup Shares', value: 24000, tag: 'Private', change: '+1.2%' },
+        { name: 'Crypto Portfolio', value: 14000, tag: 'DeFi', change: '+5.8%' }
       ],
       liabilities: [
-        { name: 'Car Loan', value: 12000, tag: 'Auto', change: '-0.3%' },
-        { name: 'Credit Card', value: 3500, tag: 'Revolving', change: '-0.1%' },
-        { name: 'Student Loan', value: 24000, tag: 'Education', change: '-0.2%' }
+        { name: 'Home Mortgage', value: 82000, tag: 'Mortgage', change: '-0.2%' },
+        { name: 'Car Loan', value: 9500, tag: 'Auto', change: '-0.3%' },
+        { name: 'Credit Card', value: 4200, tag: 'Revolving', change: '-0.1%' }
       ],
       transactions: [
-        { title: 'Salary Deposit', amount: 5200, type: 'income', category: 'Salary', date: '2024-04-01' },
-        { title: 'Food Expense', amount: -320, type: 'expense', category: 'Dining', date: '2024-04-02' },
-        { title: 'Car Loan Payment', amount: -420, type: 'expense', category: 'Debt', date: '2024-03-28' },
-        { title: 'Crypto Yield', amount: 280, type: 'income', category: 'Investments', date: '2024-03-27' },
-        { title: 'Groceries', amount: -180, type: 'expense', category: 'Living', date: '2024-03-26' }
+        { title: 'Salary Deposit', amount: 6200, type: 'income', category: 'Salary', date: '2024-04-01' },
+        { title: 'Side Project', amount: 950, type: 'income', category: 'Freelance', date: '2024-04-03' },
+        { title: 'Mortgage Payment', amount: -1450, type: 'expense', category: 'Housing', date: '2024-04-04' },
+        { title: 'Groceries', amount: -260, type: 'expense', category: 'Living', date: '2024-04-05' },
+        { title: 'Gym + Health', amount: -120, type: 'expense', category: 'Health', date: '2024-04-06' },
+        { title: 'ETF Auto-Invest', amount: -500, type: 'expense', category: 'Investments', date: '2024-04-07' },
+        { title: 'Dining Out', amount: -180, type: 'expense', category: 'Dining', date: '2024-04-08' },
+        { title: 'Crypto Yield', amount: 120, type: 'income', category: 'Investments', date: '2024-04-09' },
+        { title: 'Utilities', amount: -210, type: 'expense', category: 'Bills', date: '2024-04-10' },
+        { title: 'Transport', amount: -90, type: 'expense', category: 'Travel', date: '2024-04-11' }
       ]
     };
 
@@ -739,13 +762,19 @@
 
     function updateDisplayName() {
       if (!displayNameEl) return;
-      const name = currentUser?.display_name || currentUser?.email || 'FinMind User';
+      const name = authToken && currentUser ? (currentUser.display_name || currentUser.email || 'FinMind User') : 'DEMO';
       displayNameEl.textContent = name;
     }
 
     function updateDisplayEmail() {
       if (!displayEmailEl) return;
-      displayEmailEl.textContent = currentUser?.email || 'Not signed in';
+      if (authToken && currentUser?.email) {
+        displayEmailEl.textContent = currentUser.email;
+        displayEmailEl.classList.remove('hidden');
+      } else {
+        displayEmailEl.textContent = 'Sample data';
+        displayEmailEl.classList.remove('hidden');
+      }
     }
 
     function getAvatarKey() {
@@ -1535,7 +1564,7 @@
     navButtons.forEach(btn => btn.addEventListener('click', () => switchSection(btn.dataset.target)));
     document.getElementById('analyzeCTA').addEventListener('click', () => checkPrimeStatus('Unlock AI Advisor to generate live intelligence.'));
     document.getElementById('closePaywall').addEventListener('click', closePaywall);
-    document.getElementById('startTrial').addEventListener('click', () => startTrial());
+    document.getElementById('startTrial')?.addEventListener('click', () => startTrial());
     authButton?.addEventListener('click', () => {
       if (authToken) return; // signed in -> use Sign Out button instead
       openAuthModal();
