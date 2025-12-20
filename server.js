@@ -313,6 +313,63 @@ app.put("/me", async (req, res) => {
   }
 });
 
+// --- Billing (mock) ---
+app.post("/billing/intent", async (req, res) => {
+  if (!req.userId) return res.status(401).json({ error: "Unauthorized" });
+  const { plan, billing_cycle } = req.body || {};
+  if (!["plus", "prime"].includes(plan)) return res.status(400).json({ error: "invalid plan" });
+  const cycle = billing_cycle === "yearly" ? "yearly" : "monthly";
+  if (process.env.STRIPE_SECRET_KEY) {
+    return res.status(501).json({ error: "Stripe not wired yet" });
+  }
+  return res.json({
+    mock: true,
+    client_secret: `mock_${plan}_${cycle}_${Date.now()}`,
+    plan,
+    billing_cycle: cycle,
+  });
+});
+
+app.post("/billing/confirm", async (req, res) => {
+  if (!req.userId) return res.status(401).json({ error: "Unauthorized" });
+  const { plan, billing_cycle } = req.body || {};
+  if (!["plus", "prime"].includes(plan)) return res.status(400).json({ error: "invalid plan" });
+  const cycle = billing_cycle === "yearly" ? "yearly" : "monthly";
+  if (process.env.STRIPE_SECRET_KEY) {
+    return res.status(501).json({ error: "Stripe not wired yet" });
+  }
+  try {
+    if (!useDb) {
+      const user = memory.users.find((u) => u.id === req.userId);
+      if (!user) return res.status(404).json({ error: "User not found" });
+      user.plan = plan;
+      user.trial_expires_at = null;
+      return res.json({
+        status: "ok",
+        plan,
+        billing_cycle: cycle,
+        user: {
+          id: user.id,
+          email: user.email,
+          display_name: user.display_name,
+          plan: user.plan,
+          trial_started_at: user.trial_started_at,
+          trial_expires_at: user.trial_expires_at,
+        },
+      });
+    }
+    const { rows } = await pool.query(
+      "UPDATE users SET plan = $1, trial_expires_at = NULL WHERE id = $2 RETURNING id, email, display_name, plan, trial_started_at, trial_expires_at",
+      [plan, req.userId]
+    );
+    const user = rows[0];
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json({ status: "ok", plan, billing_cycle: cycle, user });
+  } catch (err) {
+    res.status(400).json({ error: err.message || "billing confirm failed" });
+  }
+});
+
 app.get("/summary", async (req, res) => {
   const userId = req.userId;
   const assets = await listAssets(userId);

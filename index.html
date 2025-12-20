@@ -568,7 +568,7 @@
                   <p>Export CSV</p>
                 </div>
               </div>
-              <button class="mt-4 w-full bg-gradient-to-r from-[#d946ef] via-[#7c3aed] to-[#06b6d4] text-white font-semibold py-3 rounded-xl prime-cta">Upgrade to Plus</button>
+              <button id="upgradePlus" class="mt-4 w-full bg-gradient-to-r from-[#d946ef] via-[#7c3aed] to-[#06b6d4] text-white font-semibold py-3 rounded-xl prime-cta">Upgrade to Plus</button>
             </div>
 
             <div class="text-center text-xs text-white/40">──────── or ────────</div>
@@ -584,13 +584,47 @@
               <div class="mt-3 space-y-2 text-white text-sm">
                 <p>Advanced scenarios + premium theme + priority advisor.</p>
               </div>
-              <button class="mt-4 w-full neon-gold py-3 rounded-xl transition">Go Prime</button>
+              <button id="upgradePrime" class="mt-4 w-full neon-gold py-3 rounded-xl transition">Go Prime</button>
             </div>
 
             <div class="text-xs text-slate-400 text-center">
               Cancel anytime • No lock-in
               <button class="ml-2 text-white/70 hover:text-white transition" id="stayFree">Stay on Free</button>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="billingModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden">
+      <div class="prime-border w-full max-w-md mx-auto">
+        <div class="prime-card p-6 relative">
+          <button id="closeBilling" class="absolute top-3 right-3 text-slate-400 hover:text-white transition">&times;</button>
+          <div id="billingStepConfirm" class="space-y-4">
+            <div class="text-center space-y-2">
+              <p class="text-xs uppercase tracking-[0.22em] text-white/60">Confirm plan</p>
+              <h3 class="text-2xl font-semibold text-white">You're upgrading to</h3>
+              <p id="billingPlanLabel" class="text-slate-200 text-sm">PLUS — Monthly</p>
+              <p id="billingPrice" class="text-white font-semibold text-lg">$1 / month</p>
+              <div class="text-xs text-slate-400">Cancel anytime • No hidden fees</div>
+            </div>
+            <div class="flex gap-2">
+              <button id="billingMonthly" class="flex-1 glass border border-white/10 rounded-xl py-2 text-sm text-white">Monthly</button>
+              <button id="billingYearly" class="flex-1 glass border border-white/10 rounded-xl py-2 text-sm text-white/70">Yearly</button>
+            </div>
+            <div class="flex gap-2">
+              <button id="billingBack" class="flex-1 border border-white/10 text-white/80 rounded-xl py-2">Back</button>
+              <button id="billingContinue" class="flex-1 bg-gradient-to-r from-[#d946ef] via-[#7c3aed] to-[#06b6d4] text-white font-semibold rounded-xl py-2">Confirm & Continue</button>
+            </div>
+          </div>
+          <div id="billingStepPay" class="space-y-4 hidden">
+            <div class="text-center space-y-2">
+              <p class="text-xs uppercase tracking-[0.22em] text-white/60">Payment</p>
+              <h3 class="text-2xl font-semibold text-white">Mock payment</h3>
+              <p class="text-slate-300 text-sm">This is a simulated payment for MVP testing.</p>
+            </div>
+            <button id="billingConfirmPay" class="w-full bg-gradient-to-r from-[#d946ef] via-[#7c3aed] to-[#06b6d4] text-white font-semibold py-3 rounded-xl prime-cta">Confirm Payment</button>
+            <button id="billingBackPay" class="w-full border border-white/10 text-white/80 rounded-xl py-2">Back</button>
           </div>
         </div>
       </div>
@@ -644,13 +678,14 @@
     // Override anytime via window.API_URL (e.g., http://localhost:4001).
     const DEFAULT_API = 'http://localhost:4001';
     const TRIAL_KEY = 'finmind_trial_expiry';
+    const PLAN_OVERRIDE_KEY = 'finmind_plan_override';
     const isHttpContext = typeof window !== 'undefined' && window.location.protocol.startsWith('http');
     const API_URL = window.API_URL || (isHttpContext ? window.location.origin : DEFAULT_API); // Backend API base
     const useApi = API_URL.startsWith('http');
     let authToken = localStorage.getItem('finmind_token') || '';
     let currentUser = null;
     try { currentUser = JSON.parse(localStorage.getItem('finmind_user') || 'null'); } catch { currentUser = null; }
-    let currentPlan = currentUser?.plan || 'free';
+    let currentPlan = currentUser?.plan || localStorage.getItem(PLAN_OVERRIDE_KEY) || 'free';
     let isPrime = false;
     const getTrialExpiry = () => {
       const localExpiry = Number(localStorage.getItem(TRIAL_KEY) || '0');
@@ -733,6 +768,20 @@
     const profileAvatarInput = document.getElementById('profileAvatarInput');
     const profileAvatarPreview = document.getElementById('profileAvatarPreview');
     const profileAvatarFallback = document.getElementById('profileAvatarFallback');
+    const billingModal = document.getElementById('billingModal');
+    const billingStepConfirm = document.getElementById('billingStepConfirm');
+    const billingStepPay = document.getElementById('billingStepPay');
+    const billingPlanLabel = document.getElementById('billingPlanLabel');
+    const billingPrice = document.getElementById('billingPrice');
+    const billingMonthly = document.getElementById('billingMonthly');
+    const billingYearly = document.getElementById('billingYearly');
+    const billingBack = document.getElementById('billingBack');
+    const billingContinue = document.getElementById('billingContinue');
+    const billingConfirmPay = document.getElementById('billingConfirmPay');
+    const billingBackPay = document.getElementById('billingBackPay');
+    const upgradePlus = document.getElementById('upgradePlus');
+    const upgradePrime = document.getElementById('upgradePrime');
+    const closeBilling = document.getElementById('closeBilling');
     const authModeSignIn = document.getElementById('authModeSignIn');
     const authModeSignUp = document.getElementById('authModeSignUp');
     const displayNameField = document.getElementById('displayNameField');
@@ -752,6 +801,8 @@
     let authMode = 'login';
     let refreshing = false;
     let avatarUrl = '';
+    let selectedPlan = 'plus';
+    let billingCycle = 'monthly';
 
     function resetAdvisorCache() {
       advisorData = null;
@@ -847,6 +898,65 @@
       if (localStorage.getItem(trialNoticeKey()) === '1') return;
       localStorage.setItem(trialNoticeKey(), '1');
       openPaywall('Your free trial ended. Upgrade to unlock the full advisor feed.');
+    }
+
+    function updateBillingUI() {
+      const planLabel = selectedPlan === 'prime' ? 'PRIME' : 'PLUS';
+      const cycleLabel = billingCycle === 'yearly' ? 'Yearly' : 'Monthly';
+      if (billingPlanLabel) billingPlanLabel.textContent = `${planLabel} — ${cycleLabel}`;
+      const price = selectedPlan === 'prime'
+        ? (billingCycle === 'yearly' ? '$20 / year' : '$2 / month')
+        : (billingCycle === 'yearly' ? '$10 / year' : '$1 / month');
+      if (billingPrice) billingPrice.textContent = price;
+      billingMonthly?.classList.toggle('text-white', billingCycle === 'monthly');
+      billingMonthly?.classList.toggle('text-white/70', billingCycle !== 'monthly');
+      billingYearly?.classList.toggle('text-white', billingCycle === 'yearly');
+      billingYearly?.classList.toggle('text-white/70', billingCycle !== 'yearly');
+    }
+
+    function openBillingModal(plan) {
+      selectedPlan = plan;
+      billingCycle = 'monthly';
+      updateBillingUI();
+      billingStepPay?.classList.add('hidden');
+      billingStepConfirm?.classList.remove('hidden');
+      billingModal?.classList.remove('hidden');
+    }
+
+    function closeBillingModal() {
+      billingModal?.classList.add('hidden');
+    }
+
+    async function confirmPayment() {
+      if (billingConfirmPay) billingConfirmPay.disabled = true;
+      try {
+        if (useApi && authToken) {
+          await api('/billing/intent', {
+            method: 'POST',
+            body: JSON.stringify({ plan: selectedPlan, billing_cycle: billingCycle }),
+          });
+          const result = await api('/billing/confirm', {
+            method: 'POST',
+            body: JSON.stringify({ plan: selectedPlan, billing_cycle: billingCycle, mock: true }),
+          });
+          if (result?.user) {
+            setAuth(authToken, result.user);
+          }
+        } else {
+          localStorage.setItem(PLAN_OVERRIDE_KEY, selectedPlan);
+          currentPlan = selectedPlan;
+          premiumActive();
+          setPrimeVisuals();
+        }
+        closeBillingModal();
+        closePaywall();
+        updateProfileUI();
+        renderAdvisor();
+      } catch (err) {
+        console.error('Mock payment failed', err);
+      } finally {
+        if (billingConfirmPay) billingConfirmPay.disabled = false;
+      }
     }
 
     const api = async (path, options = {}) => {
@@ -960,7 +1070,7 @@
     function setAuth(token, user) {
       authToken = token || '';
       currentUser = user || null;
-      currentPlan = currentUser?.plan || 'free';
+      currentPlan = currentUser?.plan || localStorage.getItem(PLAN_OVERRIDE_KEY) || 'free';
       if (token && user) {
         localStorage.setItem('finmind_token', token);
         localStorage.setItem('finmind_user', JSON.stringify(user));
@@ -968,6 +1078,7 @@
         localStorage.removeItem('finmind_token');
         localStorage.removeItem('finmind_user');
         avatarUrl = '';
+        currentPlan = localStorage.getItem(PLAN_OVERRIDE_KEY) || 'free';
       }
       resetAdvisorCache();
       isPrime = premiumActive();
@@ -1556,6 +1667,22 @@
     document.getElementById('assetModal').addEventListener('click', (e) => { if (e.target.id === 'assetModal') closeAssetModal(); });
     document.getElementById('paywallModal').addEventListener('click', (e) => { if (e.target.id === 'paywallModal') closePaywall(); });
     document.getElementById('stayFree')?.addEventListener('click', closePaywall);
+    billingModal?.addEventListener('click', (e) => { if (e.target.id === 'billingModal') closeBillingModal(); });
+    closeBilling?.addEventListener('click', closeBillingModal);
+    upgradePlus?.addEventListener('click', () => { closePaywall(); openBillingModal('plus'); });
+    upgradePrime?.addEventListener('click', () => { closePaywall(); openBillingModal('prime'); });
+    billingMonthly?.addEventListener('click', () => { billingCycle = 'monthly'; updateBillingUI(); });
+    billingYearly?.addEventListener('click', () => { billingCycle = 'yearly'; updateBillingUI(); });
+    billingBack?.addEventListener('click', () => { closeBillingModal(); openPaywall(); });
+    billingContinue?.addEventListener('click', () => {
+      billingStepConfirm?.classList.add('hidden');
+      billingStepPay?.classList.remove('hidden');
+    });
+    billingConfirmPay?.addEventListener('click', confirmPayment);
+    billingBackPay?.addEventListener('click', () => {
+      billingStepPay?.classList.add('hidden');
+      billingStepConfirm?.classList.remove('hidden');
+    });
     addChooser?.addEventListener('click', (e) => { if (e.target.id === 'addChooser') closeAddChooser(); });
     document.querySelector('[data-close-add]')?.addEventListener('click', closeAddChooser);
     profileModal?.addEventListener('click', (e) => { if (e.target.id === 'profileModal') closeProfileModal(); });
@@ -1711,6 +1838,7 @@
         await hydrateUser();
         await syncFromApi();
       }
+      currentPlan = currentUser?.plan || localStorage.getItem(PLAN_OVERRIDE_KEY) || currentPlan;
       updateProfileUI();
       maybeShowTrialExpired();
       setAuthMode('login');
