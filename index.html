@@ -654,14 +654,10 @@
               <label id="displayNameField" class="text-sm text-slate-300 block hidden">Display name (optional)
                 <input name="display_name" type="text" class="w-full mt-1 glass rounded-xl px-3 py-2 border border-white/10 text-white bg-white/5" placeholder="Investor Zero" />
               </label>
-              <label id="planField" class="text-sm text-slate-300 block hidden">Plan
-                <select name="plan" class="w-full mt-1 glass dark-select rounded-xl px-3 py-2 border border-white/10 text-white bg-white/5">
-                  <option value="free">FinMind Free (default)</option>
-                  <option value="plus">FinMind Plus</option>
-                  <option value="prime">FinMind Prime</option>
-                </select>
-                <p class="text-xs text-slate-400 mt-1">Plus/Prime unlock full Advisor and unlimited assets.</p>
-              </label>
+              <div id="planField" class="text-sm text-slate-300 block hidden">
+                <p class="text-xs uppercase tracking-[0.18em] text-emerald-300">Start 7-Day Free Trial</p>
+                <p class="text-xs text-slate-400 mt-1">No plan selection on signup. Upgrade anytime.</p>
+              </div>
               <button id="authSubmit" class="w-full bg-gradient-to-r from-[#d946ef] via-[#7c3aed] to-[#06b6d4] text-white font-semibold py-3 rounded-xl prime-cta" type="submit">Sign In</button>
               <p class="text-xs text-slate-400 text-center" id="authHint">Need an account? Tap Sign Up.</p>
             </form>
@@ -1714,7 +1710,6 @@
       const email = form.email.value.trim();
       const password = form.password.value;
       const display_name = form.display_name?.value.trim();
-      const plan = form.plan?.value || 'trial';
       if (!useApi) {
         if (authErrorEl) {
           authErrorEl.textContent = `Serve over http(s) or set API_URL (default ${DEFAULT_API}) to sign in.`;
@@ -1725,7 +1720,7 @@
       authErrorEl?.classList.add('hidden');
       try {
         const path = authMode === 'signup' ? '/auth/signup' : '/auth/login';
-        const payload = authMode === 'signup' ? { email, password, display_name, plan } : { email, password };
+        const payload = authMode === 'signup' ? { email, password, display_name } : { email, password };
         const { token, user } = await api(path, { method: 'POST', body: JSON.stringify(payload) });
         setAuth(token, user);
         await hydrateUser();
