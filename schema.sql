@@ -6,10 +6,16 @@ CREATE TABLE IF NOT EXISTS users (
   display_name TEXT,
   plan TEXT DEFAULT 'free',
   password_hash TEXT,
+  plan_expires_at TIMESTAMPTZ,
+  ai_quota INT,
+  ai_quota_remaining INT,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 ALTER TABLE users ADD COLUMN IF NOT EXISTS plan TEXT DEFAULT 'free';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS plan_expires_at TIMESTAMPTZ;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS ai_quota INT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS ai_quota_remaining INT;
 
 CREATE TABLE IF NOT EXISTS assets (
   id SERIAL PRIMARY KEY,

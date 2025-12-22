@@ -57,12 +57,18 @@ async function initDb() {
       password_hash TEXT,
       trial_started_at TIMESTAMPTZ DEFAULT now(),
       trial_expires_at TIMESTAMPTZ,
+      plan_expires_at TIMESTAMPTZ,
+      ai_quota INT,
+      ai_quota_remaining INT,
       created_at TIMESTAMPTZ DEFAULT now()
     );
     ALTER TABLE users ADD COLUMN IF NOT EXISTS plan TEXT DEFAULT 'free';
     ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS trial_started_at TIMESTAMPTZ DEFAULT now();
     ALTER TABLE users ADD COLUMN IF NOT EXISTS trial_expires_at TIMESTAMPTZ;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS plan_expires_at TIMESTAMPTZ;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS ai_quota INT;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS ai_quota_remaining INT;
     CREATE TABLE IF NOT EXISTS assets (
       id SERIAL PRIMARY KEY,
       user_id INT REFERENCES users(id) ON DELETE CASCADE,
@@ -103,6 +109,9 @@ const memory = {
       plan: "free",
       trial_started_at: new Date().toISOString(),
       trial_expires_at: null,
+      plan_expires_at: null,
+      ai_quota: null,
+      ai_quota_remaining: null,
       password_hash: bcrypt.hashSync("demo123", 8),
       created_at: new Date().toISOString(),
     },
@@ -138,11 +147,14 @@ async function getUserById(id) {
           plan: u.plan || "free",
           trial_started_at: u.trial_started_at,
           trial_expires_at: u.trial_expires_at,
+          plan_expires_at: u.plan_expires_at,
+          ai_quota: u.ai_quota,
+          ai_quota_remaining: u.ai_quota_remaining,
         }
       : null;
   }
   const { rows } = await pool.query(
-    "SELECT id, email, display_name, plan, trial_started_at, trial_expires_at FROM users WHERE id = $1",
+    "SELECT id, email, display_name, plan, trial_started_at, trial_expires_at, plan_expires_at, ai_quota, ai_quota_remaining FROM users WHERE id = $1",
     [id]
   );
   return rows[0] || null;
@@ -157,6 +169,59 @@ async function getUserWithPassword(email) {
   return rows[0] || null;
 }
 
+function addMonths(date, months) {
+  const next = new Date(date);
+  next.setMonth(next.getMonth() + months);
+  return next;
+}
+
+function getPlanEntitlements(plan, now = new Date()) {
+  if (plan === "plus") {
+    return { plan_expires_at: addMonths(now, 1), ai_quota: 10, ai_quota_remaining: 10 };
+  }
+  if (plan === "prime") {
+    return { plan_expires_at: addMonths(now, 1), ai_quota: 30, ai_quota_remaining: 30 };
+  }
+  return { plan_expires_at: null, ai_quota: null, ai_quota_remaining: null };
+}
+
+function isPlanExpired(user) {
+  if (!user?.plan_expires_at) return false;
+  const expiresAt = new Date(user.plan_expires_at).getTime();
+  return Number.isFinite(expiresAt) && expiresAt < Date.now();
+}
+
+async function ensureActivePlan(userId) {
+  const user = await getUserById(userId);
+  if (!user) return null;
+  if (!isPlanExpired(user) || user.plan === "free") return user;
+
+  if (!useDb) {
+    const memoryUser = memory.users.find((u) => u.id === userId);
+    if (!memoryUser) return null;
+    memoryUser.plan = "free";
+    memoryUser.ai_quota = 0;
+    memoryUser.ai_quota_remaining = 0;
+    return {
+      id: memoryUser.id,
+      email: memoryUser.email,
+      display_name: memoryUser.display_name,
+      plan: memoryUser.plan,
+      trial_started_at: memoryUser.trial_started_at,
+      trial_expires_at: memoryUser.trial_expires_at,
+      plan_expires_at: memoryUser.plan_expires_at,
+      ai_quota: memoryUser.ai_quota,
+      ai_quota_remaining: memoryUser.ai_quota_remaining,
+    };
+  }
+
+  const { rows } = await pool.query(
+    "UPDATE users SET plan = 'free', ai_quota = 0, ai_quota_remaining = 0 WHERE id = $1 RETURNING id, email, display_name, plan, trial_started_at, trial_expires_at, plan_expires_at, ai_quota, ai_quota_remaining",
+    [userId]
+  );
+  return rows[0] || null;
+}
+
 async function createUser({ email, password, display_name, plan = "free" }) {
   const password_hash = await bcrypt.hash(password, 10);
   if (!useDb) {
@@ -165,24 +230,40 @@ async function createUser({ email, password, display_name, plan = "free" }) {
     const id = memory.users.length + 1;
     const now = new Date();
     const trialExpires = plan === "prime" ? null : new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    const finalPlan = plan || "trial";
+    const { plan_expires_at, ai_quota, ai_quota_remaining } = getPlanEntitlements(finalPlan, now);
     const user = {
       id,
       email,
       display_name,
-      plan: plan || "trial",
+      plan: finalPlan,
       password_hash,
       trial_started_at: now.toISOString(),
       trial_expires_at: trialExpires,
+      plan_expires_at: plan_expires_at ? plan_expires_at.toISOString() : null,
+      ai_quota,
+      ai_quota_remaining,
       created_at: now.toISOString(),
     };
     memory.users.push(user);
-    return { id, email, display_name, plan: user.plan, trial_started_at: user.trial_started_at, trial_expires_at: user.trial_expires_at };
+    return {
+      id,
+      email,
+      display_name,
+      plan: user.plan,
+      trial_started_at: user.trial_started_at,
+      trial_expires_at: user.trial_expires_at,
+      plan_expires_at: user.plan_expires_at,
+      ai_quota: user.ai_quota,
+      ai_quota_remaining: user.ai_quota_remaining,
+    };
   }
   const trialExpires = plan === "prime" ? null : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
   const finalPlan = plan || "trial";
+  const { plan_expires_at, ai_quota, ai_quota_remaining } = getPlanEntitlements(finalPlan);
   const { rows } = await pool.query(
-    "INSERT INTO users (email, display_name, plan, password_hash, trial_started_at, trial_expires_at) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, email, display_name, plan, trial_started_at, trial_expires_at",
-    [email, display_name, finalPlan, password_hash, new Date(), trialExpires]
+    "INSERT INTO users (email, display_name, plan, password_hash, trial_started_at, trial_expires_at, plan_expires_at, ai_quota, ai_quota_remaining) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id, email, display_name, plan, trial_started_at, trial_expires_at, plan_expires_at, ai_quota, ai_quota_remaining",
+    [email, display_name, finalPlan, password_hash, new Date(), trialExpires, plan_expires_at, ai_quota, ai_quota_remaining]
   );
   return rows[0];
 }
@@ -197,9 +278,15 @@ function auth(req, res, next) {
     const token = authHeader.slice("Bearer ".length);
     try {
       const payload = jwt.verify(token, jwtSecret);
-      req.userId = payload.sub;
-      req.userPlan = payload.plan || "free";
-      return next();
+      ensureActivePlan(payload.sub)
+        .then((user) => {
+          if (!user) return res.status(401).json({ error: "Unauthorized" });
+          req.userId = user.id;
+          req.userPlan = user.plan || "free";
+          return next();
+        })
+        .catch(() => res.status(401).json({ error: "Unauthorized" }));
+      return;
     } catch {
       return res.status(401).json({ error: "Invalid token" });
     }
@@ -209,10 +296,15 @@ function auth(req, res, next) {
   if (allowDevHeader && req.headers["x-user-id"]) {
     const fallbackId = Number(req.headers["x-user-id"]);
     if (Number.isNaN(fallbackId)) return res.status(401).json({ error: "Unauthorized" });
-    req.userId = fallbackId;
-    const user = memory.users.find((u) => u.id === req.userId);
-    req.userPlan = user?.plan || "free";
-    return next();
+    ensureActivePlan(fallbackId)
+      .then((user) => {
+        if (!user) return res.status(401).json({ error: "Unauthorized" });
+        req.userId = user.id;
+        req.userPlan = user.plan || "free";
+        return next();
+      })
+      .catch(() => res.status(401).json({ error: "Unauthorized" }));
+    return;
   }
 
   return res.status(401).json({ error: "Unauthorized" });
@@ -241,13 +333,17 @@ app.post("/auth/login", async (req, res) => {
   if (!user || !user.password_hash) return res.status(401).json({ error: "invalid credentials" });
   const ok = await bcrypt.compare(password, user.password_hash);
   if (!ok) return res.status(401).json({ error: "invalid credentials" });
+  const freshUser = (await ensureActivePlan(user.id)) || user;
   const safeUser = {
-    id: user.id,
-    email: user.email,
-    display_name: user.display_name,
-    plan: user.plan || "free",
-    trial_started_at: user.trial_started_at,
-    trial_expires_at: user.trial_expires_at,
+    id: freshUser.id,
+    email: freshUser.email,
+    display_name: freshUser.display_name,
+    plan: freshUser.plan || "free",
+    trial_started_at: freshUser.trial_started_at,
+    trial_expires_at: freshUser.trial_expires_at,
+    plan_expires_at: freshUser.plan_expires_at,
+    ai_quota: freshUser.ai_quota,
+    ai_quota_remaining: freshUser.ai_quota_remaining,
   };
   const token = signToken(safeUser);
   res.json({ token, user: safeUser });
@@ -299,10 +395,13 @@ app.put("/me", async (req, res) => {
         plan: user.plan || "free",
         trial_started_at: user.trial_started_at,
         trial_expires_at: user.trial_expires_at,
+        plan_expires_at: user.plan_expires_at,
+        ai_quota: user.ai_quota,
+        ai_quota_remaining: user.ai_quota_remaining,
       });
     }
     const { rows } = await pool.query(
-      "UPDATE users SET display_name = $1 WHERE id = $2 RETURNING id, email, display_name, plan, trial_started_at, trial_expires_at",
+      "UPDATE users SET display_name = $1 WHERE id = $2 RETURNING id, email, display_name, plan, trial_started_at, trial_expires_at, plan_expires_at, ai_quota, ai_quota_remaining",
       [display_name, req.userId]
     );
     const user = rows[0];
@@ -338,12 +437,16 @@ app.post("/billing/confirm", async (req, res) => {
   if (process.env.STRIPE_SECRET_KEY) {
     return res.status(501).json({ error: "Stripe not wired yet" });
   }
+  const { plan_expires_at, ai_quota, ai_quota_remaining } = getPlanEntitlements(plan);
   try {
     if (!useDb) {
       const user = memory.users.find((u) => u.id === req.userId);
       if (!user) return res.status(404).json({ error: "User not found" });
       user.plan = plan;
       user.trial_expires_at = null;
+      user.plan_expires_at = plan_expires_at ? plan_expires_at.toISOString() : null;
+      user.ai_quota = ai_quota;
+      user.ai_quota_remaining = ai_quota_remaining;
       return res.json({
         status: "ok",
         plan,
@@ -355,12 +458,15 @@ app.post("/billing/confirm", async (req, res) => {
           plan: user.plan,
           trial_started_at: user.trial_started_at,
           trial_expires_at: user.trial_expires_at,
+          plan_expires_at: user.plan_expires_at,
+          ai_quota: user.ai_quota,
+          ai_quota_remaining: user.ai_quota_remaining,
         },
       });
     }
     const { rows } = await pool.query(
-      "UPDATE users SET plan = $1, trial_expires_at = NULL WHERE id = $2 RETURNING id, email, display_name, plan, trial_started_at, trial_expires_at",
-      [plan, req.userId]
+      "UPDATE users SET plan = $1, trial_expires_at = NULL, plan_expires_at = $2, ai_quota = $3, ai_quota_remaining = $4 WHERE id = $5 RETURNING id, email, display_name, plan, trial_started_at, trial_expires_at, plan_expires_at, ai_quota, ai_quota_remaining",
+      [plan, plan_expires_at, ai_quota, ai_quota_remaining, req.userId]
     );
     const user = rows[0];
     if (!user) return res.status(404).json({ error: "User not found" });
@@ -576,6 +682,16 @@ app.get("/advisor/insights", async (req, res) => {
   const lang = typeof req.query.lang === "string" ? req.query.lang : "en";
   const userId = req.userId;
 
+  const user = await getUserById(userId);
+  if (!user) return res.status(404).json({ error: "User not found" });
+  const remaining = user.ai_quota_remaining ?? null;
+  if (user.plan === "plus" && remaining !== null && remaining <= 0) {
+    return res.status(402).json({
+      error: "quota_exhausted",
+      message: "You've used all AI insights this month",
+    });
+  }
+
   const [assets, liabilities, transactions] = await Promise.all([
     listAssets(userId),
     listLiabilities(userId),
@@ -585,6 +701,20 @@ app.get("/advisor/insights", async (req, res) => {
   const metrics = computeMetrics(assets, liabilities, transactions, period);
   const rules = evaluateRules(metrics);
   const llmAdvice = await generateAdvisorAdvice(metrics, rules, lang);
+
+  if (user.plan === "plus" && remaining !== null) {
+    if (!useDb) {
+      const memoryUser = memory.users.find((u) => u.id === userId);
+      if (memoryUser) {
+        memoryUser.ai_quota_remaining = Math.max(0, Number(memoryUser.ai_quota_remaining || 0) - 1);
+      }
+    } else {
+      await pool.query(
+        "UPDATE users SET ai_quota_remaining = GREATEST(COALESCE(ai_quota_remaining, 0) - 1, 0) WHERE id = $1",
+        [userId]
+      );
+    }
+  }
 
   res.json({
     period,

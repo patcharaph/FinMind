@@ -187,6 +187,17 @@
       box-shadow: 0 0 28px rgba(255, 214, 102, 0.95), 0 0 60px rgba(245, 158, 11, 0.75);
       transform: translateY(-2px);
     }
+    .billing-cycle {
+      position: relative;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, background 0.2s ease;
+    }
+    .billing-cycle.is-active {
+      color: #ffffff;
+      border-color: rgba(34, 211, 238, 0.7);
+      background: linear-gradient(135deg, rgba(217, 70, 239, 0.2), rgba(6, 182, 212, 0.22));
+      box-shadow: 0 0 14px rgba(6, 182, 212, 0.45), 0 0 24px rgba(217, 70, 239, 0.35);
+      transform: translateY(-1px);
+    }
     @keyframes goldFloat {
       0%, 100% { opacity: 0.88; transform: translateY(0px); }
       50% { opacity: 1; transform: translateY(-2px); }
@@ -459,6 +470,16 @@
               <p id="profileTrial" class="text-white font-semibold">-</p>
             </div>
           </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="glass rounded-xl p-3 border border-white/10">
+              <p class="text-xs uppercase tracking-[0.12em] text-white/60">Plan expires</p>
+              <p id="profilePlanExpiry" class="text-white font-semibold">-</p>
+            </div>
+            <div class="glass rounded-xl p-3 border border-white/10">
+              <p class="text-xs uppercase tracking-[0.12em] text-white/60">AI quota</p>
+              <p id="profileAiQuota" class="text-white font-semibold">-</p>
+            </div>
+          </div>
           <form id="profileForm" class="space-y-3">
             <label class="text-sm text-slate-300 block">Display name
               <input required name="display_name" class="w-full mt-1 glass rounded-xl px-3 py-2 border border-white/10 text-white bg-white/5" placeholder="Your name" />
@@ -609,8 +630,8 @@
               <div class="text-xs text-slate-400">Cancel anytime • No hidden fees</div>
             </div>
             <div class="flex gap-2">
-              <button id="billingMonthly" class="flex-1 glass border border-white/10 rounded-xl py-2 text-sm text-white">Monthly</button>
-              <button id="billingYearly" class="flex-1 glass border border-white/10 rounded-xl py-2 text-sm text-white/70">Yearly</button>
+              <button id="billingMonthly" class="billing-cycle flex-1 glass border border-white/10 rounded-xl py-2 text-sm text-white">Monthly</button>
+              <button id="billingYearly" class="billing-cycle flex-1 glass border border-white/10 rounded-xl py-2 text-sm text-white/70">Yearly</button>
             </div>
             <div class="flex gap-2">
               <button id="billingBack" class="flex-1 border border-white/10 text-white/80 rounded-xl py-2">Back</button>
@@ -759,6 +780,8 @@
     const profileEmail = document.getElementById('profileEmail');
     const profilePlan = document.getElementById('profilePlan');
     const profileTrial = document.getElementById('profileTrial');
+    const profilePlanExpiry = document.getElementById('profilePlanExpiry');
+    const profileAiQuota = document.getElementById('profileAiQuota');
     const profileForm = document.getElementById('profileForm');
     const profileStatus = document.getElementById('profileStatus');
     const profileAvatarInput = document.getElementById('profileAvatarInput');
@@ -871,10 +894,19 @@
       return user.plan || 'free';
     }
 
+    function formatPlanExpiry(user) {
+      if (!user?.plan_expires_at) return '-';
+      const expires = new Date(user.plan_expires_at);
+      if (Number.isNaN(expires.getTime())) return '-';
+      return expires.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
     function updateProfileUI() {
       if (profileEmail) profileEmail.textContent = currentUser?.email || '-';
       if (profilePlan) profilePlan.textContent = currentUser?.plan || 'free';
       if (profileTrial) profileTrial.textContent = formatTrialStatus(currentUser);
+      if (profilePlanExpiry) profilePlanExpiry.textContent = formatPlanExpiry(currentUser);
+      if (profileAiQuota) profileAiQuota.textContent = currentUser?.ai_quota ?? '-';
       if (profileForm?.display_name) profileForm.display_name.value = currentUser?.display_name || '';
       if (profileButton) profileButton.classList.toggle('hidden', !(authToken && currentUser));
       avatarUrl = localStorage.getItem(getAvatarKey()) || '';
@@ -908,6 +940,8 @@
       billingMonthly?.classList.toggle('text-white/70', billingCycle !== 'monthly');
       billingYearly?.classList.toggle('text-white', billingCycle === 'yearly');
       billingYearly?.classList.toggle('text-white/70', billingCycle !== 'yearly');
+      billingMonthly?.classList.toggle('is-active', billingCycle === 'monthly');
+      billingYearly?.classList.toggle('is-active', billingCycle === 'yearly');
     }
 
     function openBillingModal(plan) {
@@ -1083,6 +1117,12 @@
       updateSignOutVisibility();
       updateProfileUI();
       maybeShowTrialExpired();
+      if (currentUser?.plan === 'free' && currentUser?.plan_expires_at) {
+        const expiresAt = new Date(currentUser.plan_expires_at).getTime();
+        if (Number.isFinite(expiresAt) && expiresAt < Date.now()) {
+          openPaywall();
+        }
+      }
     }
 
     function updateAuthButton() {
@@ -1254,7 +1294,14 @@
       try {
         advisorData = await api('/advisor/insights?period=last_90d&lang=en');
       } catch (err) {
-        advisorError = err?.message || 'Failed to load advisor insights';
+        const message = err?.message || '';
+        if (message.includes('quota_exhausted')) {
+          advisorData = null;
+          advisorError = '';
+          openPaywall("You've used all AI insights this month");
+          return;
+        }
+        advisorError = message || 'Failed to load advisor insights';
         advisorData = null;
       } finally {
         advisorLoading = false;
