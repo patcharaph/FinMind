@@ -33,29 +33,45 @@
                   radial-gradient(circle at 50% 75%, rgba(16, 185, 129, 0.12), transparent 28%),
                   #05080f;
     }
-    body.prime-mode.prime-theme-aurora {
-      --glass: rgba(20, 32, 44, 0.6);
-      --chip-border: rgba(148, 163, 184, 0.24);
-      background: radial-gradient(circle at 10% 15%, rgba(56, 189, 248, 0.22), transparent 35%),
-                  radial-gradient(circle at 85% 20%, rgba(168, 85, 247, 0.22), transparent 35%),
-                  radial-gradient(circle at 50% 80%, rgba(16, 185, 129, 0.16), transparent 40%),
-                  #040b14;
-    }
-    body.prime-mode.prime-theme-ember {
-      --glass: rgba(36, 26, 18, 0.7);
-      --chip-border: rgba(251, 191, 36, 0.28);
-      background: radial-gradient(circle at 12% 20%, rgba(245, 158, 11, 0.28), transparent 35%),
-                  radial-gradient(circle at 80% 10%, rgba(239, 68, 68, 0.22), transparent 34%),
-                  radial-gradient(circle at 55% 80%, rgba(14, 116, 144, 0.12), transparent 40%),
-                  #0e0a07;
-    }
-    body.prime-mode.prime-theme-noir {
+    body.prime-mode.prime-theme-dark {
       --glass: rgba(12, 18, 28, 0.7);
       --chip-border: rgba(148, 163, 184, 0.18);
       background: radial-gradient(circle at 18% 18%, rgba(59, 130, 246, 0.16), transparent 32%),
                   radial-gradient(circle at 78% 12%, rgba(14, 165, 233, 0.18), transparent 34%),
                   radial-gradient(circle at 50% 85%, rgba(99, 102, 241, 0.18), transparent 38%),
                   #05070f;
+    }
+    body.prime-mode.prime-theme-light {
+      --glass: rgba(255, 255, 255, 0.55);
+      --chip-border: rgba(148, 163, 184, 0.35);
+      background: radial-gradient(circle at 20% 18%, rgba(125, 211, 252, 0.35), transparent 40%),
+                  radial-gradient(circle at 82% 12%, rgba(232, 121, 249, 0.32), transparent 38%),
+                  radial-gradient(circle at 50% 82%, rgba(16, 185, 129, 0.22), transparent 40%),
+                  #1b2333;
+    }
+    body.prime-mode.prime-theme-gold {
+      --glass: rgba(28, 22, 12, 0.75);
+      --chip-border: rgba(251, 191, 36, 0.3);
+      background: radial-gradient(circle at 12% 20%, rgba(245, 158, 11, 0.35), transparent 35%),
+                  radial-gradient(circle at 78% 12%, rgba(234, 179, 8, 0.28), transparent 36%),
+                  radial-gradient(circle at 55% 82%, rgba(14, 116, 144, 0.16), transparent 40%),
+                  #0c0a06;
+    }
+    body.prime-mode.prime-theme-cartoon {
+      --glass: rgba(16, 12, 40, 0.72);
+      --chip-border: rgba(244, 114, 182, 0.35);
+      background: radial-gradient(circle at 18% 18%, rgba(244, 114, 182, 0.4), transparent 38%),
+                  radial-gradient(circle at 78% 20%, rgba(56, 189, 248, 0.35), transparent 36%),
+                  radial-gradient(circle at 45% 82%, rgba(250, 204, 21, 0.3), transparent 40%),
+                  #0b0f1f;
+    }
+    body.prime-mode.prime-theme-cyberpunk {
+      --glass: rgba(8, 16, 22, 0.78);
+      --chip-border: rgba(34, 211, 238, 0.35);
+      background: radial-gradient(circle at 15% 18%, rgba(34, 211, 238, 0.32), transparent 36%),
+                  radial-gradient(circle at 80% 15%, rgba(236, 72, 153, 0.28), transparent 36%),
+                  radial-gradient(circle at 50% 82%, rgba(99, 102, 241, 0.28), transparent 40%),
+                  #04090f;
     }
     .glass {
       background: var(--glass);
@@ -200,6 +216,12 @@
       box-shadow: 0 0 16px rgba(34, 211, 238, 0.55), 0 0 36px rgba(168, 85, 247, 0.35);
       transform: translateY(-1px);
     }
+    .advisor-badge-prime {
+      background: rgba(251, 191, 36, 0.18);
+      color: #fde68a;
+      border-color: rgba(251, 191, 36, 0.6);
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.45);
+    }
     .neon-gold {
       color: #fff7d6;
       background: linear-gradient(120deg, rgba(255, 214, 102, 0.35), rgba(245, 158, 11, 0.28));
@@ -210,6 +232,28 @@
     .neon-gold:hover {
       box-shadow: 0 0 28px rgba(255, 214, 102, 0.95), 0 0 60px rgba(245, 158, 11, 0.75);
       transform: translateY(-2px);
+    }
+    .neon-upgrade-float {
+      position: fixed;
+      right: 20px;
+      bottom: 110px;
+      z-index: 45;
+      animation: float 6s ease-in-out infinite, neonPulse 2.4s ease-in-out infinite;
+    }
+    .neon-upgrade-float button {
+      background: linear-gradient(120deg, rgba(217, 70, 239, 0.35), rgba(6, 182, 212, 0.32));
+      border: 1px solid rgba(217, 70, 239, 0.6);
+      box-shadow: 0 0 18px rgba(217, 70, 239, 0.35), 0 0 36px rgba(6, 182, 212, 0.25);
+    }
+    .neon-upgrade-float button:hover {
+      box-shadow: 0 0 24px rgba(217, 70, 239, 0.55), 0 0 48px rgba(6, 182, 212, 0.45);
+      transform: translateY(-2px);
+    }
+    @media (max-width: 520px) {
+      .neon-upgrade-float {
+        right: 14px;
+        bottom: 100px;
+      }
     }
     .billing-cycle {
       position: relative;
@@ -381,6 +425,12 @@
       </section>
     </main>
 
+    <div class="neon-upgrade-float">
+      <button id="floatingUpgrade" class="text-xs text-white font-semibold px-4 py-2 rounded-full backdrop-blur-sm">
+        Upgrade
+      </button>
+    </div>
+
     <nav class="glass border border-white/10 rounded-2xl fixed bottom-4 inset-x-4 max-w-md mx-auto px-3 py-2 flex items-center justify-between shadow-2xl">
       <button class="nav-btn flex-1 py-2 flex flex-col items-center text-xs text-slate-300" data-target="home">
         <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l9-9 9 9M4.5 10.5V21h15V10.5"/></svg>
@@ -508,9 +558,11 @@
           <div id="primeThemeWrap" class="glass rounded-xl p-3 border border-white/10 hidden">
             <p class="text-xs uppercase tracking-[0.12em] text-white/60">Prime theme</p>
             <select id="primeThemeSelect" class="w-full mt-2 glass dark-select rounded-xl px-3 py-2 border border-white/10 text-white bg-white/10">
-              <option value="aurora">Aurora Pulse</option>
-              <option value="ember">Ember Gold</option>
-              <option value="noir">Nocturne Noir</option>
+              <option value="dark">Dark Vault</option>
+              <option value="light">Light Halo</option>
+              <option value="gold">Gold Lux</option>
+              <option value="cartoon">Cartoon Pop</option>
+              <option value="cyberpunk">Cyberpunk Grid</option>
             </select>
           </div>
           <form id="profileForm" class="space-y-3">
@@ -726,7 +778,7 @@
     const TRIAL_KEY = 'finmind_trial_expiry';
     const PLAN_OVERRIDE_KEY = 'finmind_plan_override';
     const PRIME_THEME_KEY = 'finmind_prime_theme';
-    const PRIME_THEMES = ['aurora', 'ember', 'noir'];
+    const PRIME_THEMES = ['dark', 'light', 'gold', 'cartoon', 'cyberpunk'];
     const isHttpContext = typeof window !== 'undefined' && window.location.protocol.startsWith('http');
     const API_URL = window.API_URL || (isHttpContext ? window.location.origin : DEFAULT_API); // Backend API base
     const useApi = API_URL.startsWith('http');
@@ -764,8 +816,8 @@
       return premium;
     };
     const getPrimeTheme = () => {
-      const theme = localStorage.getItem(PRIME_THEME_KEY) || 'aurora';
-      return PRIME_THEMES.includes(theme) ? theme : 'aurora';
+      const theme = localStorage.getItem(PRIME_THEME_KEY) || 'dark';
+      return PRIME_THEMES.includes(theme) ? theme : 'dark';
     };
     function applyPrimeTheme(theme) {
       const resolved = PRIME_THEMES.includes(theme) ? theme : 'aurora';
@@ -778,9 +830,13 @@
     function updateAdvisorQuotaBadge() {
       if (!advisorQuotaBadge) return;
       const remaining = currentUser?.ai_quota_remaining;
-      const show = currentUser?.plan === 'plus' && Number.isFinite(remaining);
+      const plan = currentUser?.plan;
+      const show = (plan === 'plus' && Number.isFinite(remaining)) || plan === 'prime';
       advisorQuotaBadge.classList.toggle('hidden', !show);
-      if (show) advisorQuotaBadge.textContent = String(Math.max(0, remaining));
+      advisorQuotaBadge.classList.toggle('advisor-badge-prime', plan === 'prime');
+      if (show) {
+        advisorQuotaBadge.textContent = plan === 'prime' ? '∞' : String(Math.max(0, remaining));
+      }
     }
     premiumActive();
     let paywallReason = 'Experience full AI wealth intelligence, premium visuals, and unlimited growth.';
@@ -868,6 +924,7 @@
     const quickAddTransaction = document.getElementById('quickAddTransaction');
     const quickAddAsset = document.getElementById('quickAddAsset');
     const quickAddLiability = document.getElementById('quickAddLiability');
+    const floatingUpgrade = document.getElementById('floatingUpgrade');
     let activeSection = 'home';
     let advisorTimer = null;
     let advisorLoading = false;
@@ -1129,11 +1186,18 @@
 
       tierBadge.classList.remove('tier-chip-prime', 'tier-chip-free');
       let label = 'FinMind v1.0';
-      if (hasActiveTrial()) {
+      const plan = currentUser?.plan || currentPlan;
+      if (hasActiveTrial() || plan === 'trial') {
         label = 'FINMIND FREE TRIAL';
         tierBadge.classList.add('tier-chip-prime');
+      } else if (plan === 'prime') {
+        label = 'FINMIND PRIME';
+        tierBadge.classList.add('tier-chip-prime');
+      } else if (plan === 'plus') {
+        label = 'FINMIND PLUS';
+        tierBadge.classList.add('tier-chip-prime');
       } else if (isPrime) {
-        label = primeStyle ? 'FinMind Prime' : 'FinMind Plus';
+        label = primeStyle ? 'FINMIND PRIME' : 'FINMIND PLUS';
         tierBadge.classList.add('tier-chip-prime');
       } else {
         tierBadge.classList.add('tier-chip-free');
@@ -1976,6 +2040,9 @@
       const theme = primeThemeSelect.value;
       localStorage.setItem(PRIME_THEME_KEY, theme);
       applyPrimeTheme(theme);
+    });
+    floatingUpgrade?.addEventListener('click', () => {
+      openPaywall('Upgrade to unlock FinMind Plus or Prime.');
     });
 
     async function bootstrap() {
