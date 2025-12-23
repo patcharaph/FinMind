@@ -33,45 +33,45 @@
                   radial-gradient(circle at 50% 75%, rgba(16, 185, 129, 0.12), transparent 28%),
                   #05080f;
     }
-    body.prime-mode.prime-theme-dark {
-      --glass: rgba(12, 18, 28, 0.7);
-      --chip-border: rgba(148, 163, 184, 0.18);
-      background: radial-gradient(circle at 18% 18%, rgba(59, 130, 246, 0.16), transparent 32%),
-                  radial-gradient(circle at 78% 12%, rgba(14, 165, 233, 0.18), transparent 34%),
-                  radial-gradient(circle at 50% 85%, rgba(99, 102, 241, 0.18), transparent 38%),
+    body.prime-mode.prime-theme-obsidian {
+      --glass: rgba(10, 14, 24, 0.78);
+      --chip-border: rgba(148, 163, 184, 0.22);
+      background: radial-gradient(circle at 18% 18%, rgba(30, 64, 175, 0.2), transparent 34%),
+                  radial-gradient(circle at 82% 12%, rgba(14, 116, 144, 0.18), transparent 34%),
+                  radial-gradient(circle at 50% 85%, rgba(17, 24, 39, 0.45), transparent 40%),
                   #05070f;
     }
-    body.prime-mode.prime-theme-light {
-      --glass: rgba(255, 255, 255, 0.55);
-      --chip-border: rgba(148, 163, 184, 0.35);
-      background: radial-gradient(circle at 20% 18%, rgba(125, 211, 252, 0.35), transparent 40%),
-                  radial-gradient(circle at 82% 12%, rgba(232, 121, 249, 0.32), transparent 38%),
-                  radial-gradient(circle at 50% 82%, rgba(16, 185, 129, 0.22), transparent 40%),
-                  #1b2333;
+    body.prime-mode.prime-theme-ember {
+      --glass: rgba(28, 18, 12, 0.76);
+      --chip-border: rgba(251, 191, 36, 0.32);
+      background: radial-gradient(circle at 12% 20%, rgba(245, 158, 11, 0.38), transparent 36%),
+                  radial-gradient(circle at 76% 14%, rgba(239, 68, 68, 0.26), transparent 34%),
+                  radial-gradient(circle at 55% 82%, rgba(88, 28, 135, 0.22), transparent 40%),
+                  #0c0806;
     }
-    body.prime-mode.prime-theme-gold {
-      --glass: rgba(28, 22, 12, 0.75);
-      --chip-border: rgba(251, 191, 36, 0.3);
-      background: radial-gradient(circle at 12% 20%, rgba(245, 158, 11, 0.35), transparent 35%),
-                  radial-gradient(circle at 78% 12%, rgba(234, 179, 8, 0.28), transparent 36%),
-                  radial-gradient(circle at 55% 82%, rgba(14, 116, 144, 0.16), transparent 40%),
-                  #0c0a06;
+    body.prime-mode.prime-theme-tide {
+      --glass: rgba(10, 20, 28, 0.74);
+      --chip-border: rgba(34, 211, 238, 0.28);
+      background: radial-gradient(circle at 20% 16%, rgba(34, 211, 238, 0.3), transparent 36%),
+                  radial-gradient(circle at 82% 18%, rgba(59, 130, 246, 0.26), transparent 36%),
+                  radial-gradient(circle at 50% 85%, rgba(16, 185, 129, 0.22), transparent 40%),
+                  #050b12;
     }
-    body.prime-mode.prime-theme-cartoon {
-      --glass: rgba(16, 12, 40, 0.72);
-      --chip-border: rgba(244, 114, 182, 0.35);
-      background: radial-gradient(circle at 18% 18%, rgba(244, 114, 182, 0.4), transparent 38%),
-                  radial-gradient(circle at 78% 20%, rgba(56, 189, 248, 0.35), transparent 36%),
-                  radial-gradient(circle at 45% 82%, rgba(250, 204, 21, 0.3), transparent 40%),
-                  #0b0f1f;
+    body.prime-mode.prime-theme-arcade {
+      --glass: rgba(12, 8, 32, 0.75);
+      --chip-border: rgba(244, 114, 182, 0.38);
+      background: radial-gradient(circle at 16% 18%, rgba(244, 114, 182, 0.45), transparent 38%),
+                  radial-gradient(circle at 80% 16%, rgba(56, 189, 248, 0.38), transparent 36%),
+                  radial-gradient(circle at 48% 84%, rgba(250, 204, 21, 0.32), transparent 40%),
+                  #0b0c1b;
     }
-    body.prime-mode.prime-theme-cyberpunk {
-      --glass: rgba(8, 16, 22, 0.78);
-      --chip-border: rgba(34, 211, 238, 0.35);
-      background: radial-gradient(circle at 15% 18%, rgba(34, 211, 238, 0.32), transparent 36%),
-                  radial-gradient(circle at 80% 15%, rgba(236, 72, 153, 0.28), transparent 36%),
-                  radial-gradient(circle at 50% 82%, rgba(99, 102, 241, 0.28), transparent 40%),
-                  #04090f;
+    body.prime-mode.prime-theme-cyber {
+      --glass: rgba(6, 14, 20, 0.8);
+      --chip-border: rgba(34, 211, 238, 0.38);
+      background: radial-gradient(circle at 14% 16%, rgba(34, 211, 238, 0.34), transparent 36%),
+                  radial-gradient(circle at 82% 14%, rgba(236, 72, 153, 0.32), transparent 36%),
+                  radial-gradient(circle at 50% 86%, rgba(99, 102, 241, 0.3), transparent 40%),
+                  #04070d;
     }
     .glass {
       background: var(--glass);
@@ -234,10 +234,6 @@
       transform: translateY(-2px);
     }
     .neon-upgrade-float {
-      position: fixed;
-      right: 20px;
-      bottom: 110px;
-      z-index: 45;
       animation: float 6s ease-in-out infinite, neonPulse 2.4s ease-in-out infinite;
     }
     .neon-upgrade-float button {
@@ -248,12 +244,6 @@
     .neon-upgrade-float button:hover {
       box-shadow: 0 0 24px rgba(217, 70, 239, 0.55), 0 0 48px rgba(6, 182, 212, 0.45);
       transform: translateY(-2px);
-    }
-    @media (max-width: 520px) {
-      .neon-upgrade-float {
-        right: 14px;
-        bottom: 100px;
-      }
     }
     .billing-cycle {
       position: relative;
@@ -288,9 +278,11 @@
           <p class="text-xs uppercase tracking-[0.22em] text-white/50">Welcome back</p>
           <h1 id="displayName" class="text-xl font-semibold text-white truncate">Aurora Reyes</h1>
           <p id="displayEmail" class="text-xs text-white/50 truncate hidden"></p>
-          <div class="mt-2 flex items-center gap-3">
-            <button id="profileButton" class="text-xs text-white/70 hover:text-white transition hidden">Edit profile</button>
-          </div>
+        <div class="mt-2 flex items-center gap-3">
+          <button id="profileButton" class="text-xs text-white/70 hover:text-white transition hidden">Edit profile</button>
+          <button id="authButton" class="neon-signin text-xs px-3 py-1 rounded-full hidden">Sign In</button>
+          <button id="signOutButton" class="text-xs text-white/70 hover:text-white transition hidden">Sign Out</button>
+        </div>
         </div>
       </div>
       <div class="flex flex-col items-end gap-2 shrink-0">
@@ -298,9 +290,10 @@
           <span class="dot"></span>
           <span class="label">FinMind v1.0</span>
         </div>
-        <div class="flex items-center gap-2">
-          <button id="authButton" class="neon-signin text-xs px-3 py-1 rounded-full hidden">Sign In</button>
-          <button id="signOutButton" class="text-xs text-white/70 hover:text-white transition hidden">Sign Out</button>
+        <div class="neon-upgrade-float">
+          <button id="floatingUpgrade" class="text-xs text-white font-semibold px-4 py-2 rounded-full backdrop-blur-sm">
+            Upgrade
+          </button>
         </div>
       </div>
     </header>
@@ -424,12 +417,6 @@
         <div id="historyList" class="space-y-2"></div>
       </section>
     </main>
-
-    <div class="neon-upgrade-float">
-      <button id="floatingUpgrade" class="text-xs text-white font-semibold px-4 py-2 rounded-full backdrop-blur-sm">
-        Upgrade
-      </button>
-    </div>
 
     <nav class="glass border border-white/10 rounded-2xl fixed bottom-4 inset-x-4 max-w-md mx-auto px-3 py-2 flex items-center justify-between shadow-2xl">
       <button class="nav-btn flex-1 py-2 flex flex-col items-center text-xs text-slate-300" data-target="home">
@@ -558,11 +545,11 @@
           <div id="primeThemeWrap" class="glass rounded-xl p-3 border border-white/10 hidden">
             <p class="text-xs uppercase tracking-[0.12em] text-white/60">Prime theme</p>
             <select id="primeThemeSelect" class="w-full mt-2 glass dark-select rounded-xl px-3 py-2 border border-white/10 text-white bg-white/10">
-              <option value="dark">Dark Vault</option>
-              <option value="light">Light Halo</option>
-              <option value="gold">Gold Lux</option>
-              <option value="cartoon">Cartoon Pop</option>
-              <option value="cyberpunk">Cyberpunk Grid</option>
+              <option value="obsidian">Obsidian Black</option>
+              <option value="ember">Ember Gold</option>
+              <option value="tide">Tide Blue</option>
+              <option value="arcade">Arcade Pop</option>
+              <option value="cyber">Cyber Pulse</option>
             </select>
           </div>
           <form id="profileForm" class="space-y-3">
@@ -778,7 +765,7 @@
     const TRIAL_KEY = 'finmind_trial_expiry';
     const PLAN_OVERRIDE_KEY = 'finmind_plan_override';
     const PRIME_THEME_KEY = 'finmind_prime_theme';
-    const PRIME_THEMES = ['dark', 'light', 'gold', 'cartoon', 'cyberpunk'];
+    const PRIME_THEMES = ['obsidian', 'ember', 'tide', 'arcade', 'cyber'];
     const isHttpContext = typeof window !== 'undefined' && window.location.protocol.startsWith('http');
     const API_URL = window.API_URL || (isHttpContext ? window.location.origin : DEFAULT_API); // Backend API base
     const useApi = API_URL.startsWith('http');
@@ -793,8 +780,9 @@
     let currentPlan = resolveCurrentPlan();
     let isPrime = false;
     const getTrialExpiry = () => {
-      const localExpiry = Number(localStorage.getItem(TRIAL_KEY) || '0');
       const serverExpiry = currentUser?.trial_expires_at ? new Date(currentUser.trial_expires_at).getTime() : 0;
+      if (useApi && authToken) return serverExpiry;
+      const localExpiry = Number(localStorage.getItem(TRIAL_KEY) || '0');
       return Math.max(localExpiry, serverExpiry);
     };
     const hasActiveTrial = () => {
@@ -810,17 +798,18 @@
     };
     const trialNoticeKey = () => `finmind_trial_notice_${currentUser?.email || 'guest'}`;
     const isPrimeTheme = () => hasActiveTrial() || currentPlan === 'prime';
+    const isPaidPlan = () => ['plus', 'prime'].includes(currentUser?.plan || currentPlan);
     const premiumActive = () => {
       const premium = ['prime', 'plus'].includes(currentPlan);
       isPrime = premium;
       return premium;
     };
     const getPrimeTheme = () => {
-      const theme = localStorage.getItem(PRIME_THEME_KEY) || 'dark';
-      return PRIME_THEMES.includes(theme) ? theme : 'dark';
+      const theme = localStorage.getItem(PRIME_THEME_KEY) || 'obsidian';
+      return PRIME_THEMES.includes(theme) ? theme : 'obsidian';
     };
     function applyPrimeTheme(theme) {
-      const resolved = PRIME_THEMES.includes(theme) ? theme : 'aurora';
+      const resolved = PRIME_THEMES.includes(theme) ? theme : 'obsidian';
       document.body.classList.remove(...PRIME_THEMES.map((item) => `prime-theme-${item}`));
       if (isPrimeTheme()) {
         document.body.classList.add(`prime-theme-${resolved}`);
@@ -1187,7 +1176,7 @@
       tierBadge.classList.remove('tier-chip-prime', 'tier-chip-free');
       let label = 'FinMind v1.0';
       const plan = currentUser?.plan || currentPlan;
-      if (hasActiveTrial() || plan === 'trial') {
+      if (!isPaidPlan() && (hasActiveTrial() || plan === 'trial')) {
         label = 'FINMIND FREE TRIAL';
         tierBadge.classList.add('tier-chip-prime');
       } else if (plan === 'prime') {
