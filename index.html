@@ -390,10 +390,11 @@
         <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7h18M3 12h18M3 17h18"/></svg>
         Assets
       </button>
-      <button class="nav-btn flex-1 py-3 -mt-6 flex flex-col items-center text-xs text-white" data-target="advisor">
+      <button class="nav-btn relative flex-1 py-3 -mt-6 flex flex-col items-center text-xs text-white" data-target="advisor">
         <div class="w-14 h-14 rounded-full bg-gradient-to-br from-[#d946ef] to-[#4f46e5] flex items-center justify-center shadow-lg glow mb-1">
           <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v4m0 10v4m-7-7h4m6 0h4M5.5 5.5l3 3m7 7 3 3m0-13-3 3m-7 7-3 3"/></svg>
         </div>
+        <span id="advisorQuotaBadge" class="absolute -top-1 right-4 min-w-[22px] px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-400/20 text-emerald-100 border border-emerald-300/50 shadow-[0_0_10px_rgba(16,185,129,0.35)] hidden">0</span>
         Advisor
       </button>
       <button class="nav-btn flex-1 py-2 flex flex-col items-center text-xs text-slate-300" data-target="history">
@@ -774,6 +775,13 @@
       }
       if (primeThemeSelect) primeThemeSelect.value = resolved;
     }
+    function updateAdvisorQuotaBadge() {
+      if (!advisorQuotaBadge) return;
+      const remaining = currentUser?.ai_quota_remaining;
+      const show = currentUser?.plan === 'plus' && Number.isFinite(remaining);
+      advisorQuotaBadge.classList.toggle('hidden', !show);
+      if (show) advisorQuotaBadge.textContent = String(Math.max(0, remaining));
+    }
     premiumActive();
     let paywallReason = 'Experience full AI wealth intelligence, premium visuals, and unlimited growth.';
     const state = {
@@ -831,6 +839,7 @@
     const profileAiQuota = document.getElementById('profileAiQuota');
     const primeThemeWrap = document.getElementById('primeThemeWrap');
     const primeThemeSelect = document.getElementById('primeThemeSelect');
+    const advisorQuotaBadge = document.getElementById('advisorQuotaBadge');
     const profileForm = document.getElementById('profileForm');
     const profileStatus = document.getElementById('profileStatus');
     const profileAvatarInput = document.getElementById('profileAvatarInput');
@@ -961,6 +970,7 @@
       const showPrimeTheme = currentUser?.plan === 'prime';
       primeThemeWrap?.classList.toggle('hidden', !showPrimeTheme);
       if (showPrimeTheme) applyPrimeTheme(getPrimeTheme());
+      updateAdvisorQuotaBadge();
       avatarUrl = localStorage.getItem(getAvatarKey()) || '';
       updateAvatarUI();
       if (trialBanner && trialStatusEl) {
@@ -1087,6 +1097,22 @@
         setAuth(authToken, user);
       } catch (err) {
         console.error('Failed to fetch user profile', err);
+      }
+    }
+
+    async function fetchQuota() {
+      if (!useApi || !authToken) return;
+      try {
+        const quota = await api('/quota');
+        if (!quota) return;
+        if (currentUser) {
+          currentUser.plan = quota.plan || currentUser.plan;
+          currentUser.ai_quota = quota.ai_quota;
+          currentUser.ai_quota_remaining = quota.ai_quota_remaining;
+          updateProfileUI();
+        }
+      } catch (err) {
+        console.error('Failed to fetch quota', err);
       }
     }
 
@@ -1357,6 +1383,7 @@
       renderAdvisor();
       try {
         advisorData = await api('/advisor/insights?period=last_90d&lang=en');
+        await fetchQuota();
       } catch (err) {
         const message = err?.message || '';
         if (message.includes('quota_exhausted')) {
@@ -1956,6 +1983,7 @@
       updateSignOutVisibility();
       if (useApi && authToken) {
         await hydrateUser();
+        await fetchQuota();
         await syncFromApi();
       }
       currentPlan = resolveCurrentPlan();

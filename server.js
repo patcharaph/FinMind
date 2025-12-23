@@ -424,6 +424,17 @@ app.get("/me", async (req, res) => {
   res.json(user);
 });
 
+app.get("/quota", async (req, res) => {
+  if (!req.userId) return res.status(401).json({ error: "Unauthorized" });
+  const user = await getUserById(req.userId);
+  if (!user) return res.status(404).json({ error: "User not found" });
+  res.json({
+    plan: user.plan || "free",
+    ai_quota: user.ai_quota,
+    ai_quota_remaining: user.ai_quota_remaining,
+  });
+});
+
 app.put("/me", async (req, res) => {
   if (!req.userId) return res.status(401).json({ error: "Unauthorized" });
   const { display_name } = req.body || {};
