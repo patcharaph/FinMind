@@ -33,6 +33,30 @@
                   radial-gradient(circle at 50% 75%, rgba(16, 185, 129, 0.12), transparent 28%),
                   #05080f;
     }
+    body.prime-mode.prime-theme-aurora {
+      --glass: rgba(20, 32, 44, 0.6);
+      --chip-border: rgba(148, 163, 184, 0.24);
+      background: radial-gradient(circle at 10% 15%, rgba(56, 189, 248, 0.22), transparent 35%),
+                  radial-gradient(circle at 85% 20%, rgba(168, 85, 247, 0.22), transparent 35%),
+                  radial-gradient(circle at 50% 80%, rgba(16, 185, 129, 0.16), transparent 40%),
+                  #040b14;
+    }
+    body.prime-mode.prime-theme-ember {
+      --glass: rgba(36, 26, 18, 0.7);
+      --chip-border: rgba(251, 191, 36, 0.28);
+      background: radial-gradient(circle at 12% 20%, rgba(245, 158, 11, 0.28), transparent 35%),
+                  radial-gradient(circle at 80% 10%, rgba(239, 68, 68, 0.22), transparent 34%),
+                  radial-gradient(circle at 55% 80%, rgba(14, 116, 144, 0.12), transparent 40%),
+                  #0e0a07;
+    }
+    body.prime-mode.prime-theme-noir {
+      --glass: rgba(12, 18, 28, 0.7);
+      --chip-border: rgba(148, 163, 184, 0.18);
+      background: radial-gradient(circle at 18% 18%, rgba(59, 130, 246, 0.16), transparent 32%),
+                  radial-gradient(circle at 78% 12%, rgba(14, 165, 233, 0.18), transparent 34%),
+                  radial-gradient(circle at 50% 85%, rgba(99, 102, 241, 0.18), transparent 38%),
+                  #05070f;
+    }
     .glass {
       background: var(--glass);
       border: 1px solid rgba(255, 255, 255, 0.08);
@@ -480,6 +504,14 @@
               <p id="profileAiQuota" class="text-white font-semibold">-</p>
             </div>
           </div>
+          <div id="primeThemeWrap" class="glass rounded-xl p-3 border border-white/10 hidden">
+            <p class="text-xs uppercase tracking-[0.12em] text-white/60">Prime theme</p>
+            <select id="primeThemeSelect" class="w-full mt-2 glass dark-select rounded-xl px-3 py-2 border border-white/10 text-white bg-white/10">
+              <option value="aurora">Aurora Pulse</option>
+              <option value="ember">Ember Gold</option>
+              <option value="noir">Nocturne Noir</option>
+            </select>
+          </div>
           <form id="profileForm" class="space-y-3">
             <label class="text-sm text-slate-300 block">Display name
               <input required name="display_name" class="w-full mt-1 glass rounded-xl px-3 py-2 border border-white/10 text-white bg-white/5" placeholder="Your name" />
@@ -583,10 +615,6 @@
                 <div class="flex items-center space-x-2">
                   <span class="w-5 h-5 rounded-full bg-indigo-500/30 border border-indigo-400 flex items-center justify-center text-xs text-indigo-100">🤖</span>
                   <p>10 AI insights / month</p>
-                </div>
-                <div class="flex items-center space-x-2">
-                  <span class="w-5 h-5 rounded-full bg-slate-500/30 border border-slate-400 flex items-center justify-center text-xs text-slate-100">⇩</span>
-                  <p>Export CSV</p>
                 </div>
               </div>
               <button id="upgradePlus" class="mt-4 w-full bg-gradient-to-r from-[#d946ef] via-[#7c3aed] to-[#06b6d4] text-white font-semibold py-3 rounded-xl prime-cta">Upgrade to Plus</button>
@@ -696,13 +724,20 @@
     const DEFAULT_API = 'http://localhost:4001';
     const TRIAL_KEY = 'finmind_trial_expiry';
     const PLAN_OVERRIDE_KEY = 'finmind_plan_override';
+    const PRIME_THEME_KEY = 'finmind_prime_theme';
+    const PRIME_THEMES = ['aurora', 'ember', 'noir'];
     const isHttpContext = typeof window !== 'undefined' && window.location.protocol.startsWith('http');
     const API_URL = window.API_URL || (isHttpContext ? window.location.origin : DEFAULT_API); // Backend API base
     const useApi = API_URL.startsWith('http');
     let authToken = localStorage.getItem('finmind_token') || '';
     let currentUser = null;
     try { currentUser = JSON.parse(localStorage.getItem('finmind_user') || 'null'); } catch { currentUser = null; }
-    let currentPlan = currentUser?.plan || localStorage.getItem(PLAN_OVERRIDE_KEY) || 'free';
+    const getPlanOverride = () => localStorage.getItem(PLAN_OVERRIDE_KEY);
+    const resolveCurrentPlan = () => {
+      if (useApi && authToken) return currentUser?.plan || 'free';
+      return currentUser?.plan || getPlanOverride() || 'free';
+    };
+    let currentPlan = resolveCurrentPlan();
     let isPrime = false;
     const getTrialExpiry = () => {
       const localExpiry = Number(localStorage.getItem(TRIAL_KEY) || '0');
@@ -727,6 +762,18 @@
       isPrime = premium;
       return premium;
     };
+    const getPrimeTheme = () => {
+      const theme = localStorage.getItem(PRIME_THEME_KEY) || 'aurora';
+      return PRIME_THEMES.includes(theme) ? theme : 'aurora';
+    };
+    function applyPrimeTheme(theme) {
+      const resolved = PRIME_THEMES.includes(theme) ? theme : 'aurora';
+      document.body.classList.remove(...PRIME_THEMES.map((item) => `prime-theme-${item}`));
+      if (isPrimeTheme()) {
+        document.body.classList.add(`prime-theme-${resolved}`);
+      }
+      if (primeThemeSelect) primeThemeSelect.value = resolved;
+    }
     premiumActive();
     let paywallReason = 'Experience full AI wealth intelligence, premium visuals, and unlimited growth.';
     const state = {
@@ -782,6 +829,8 @@
     const profileTrial = document.getElementById('profileTrial');
     const profilePlanExpiry = document.getElementById('profilePlanExpiry');
     const profileAiQuota = document.getElementById('profileAiQuota');
+    const primeThemeWrap = document.getElementById('primeThemeWrap');
+    const primeThemeSelect = document.getElementById('primeThemeSelect');
     const profileForm = document.getElementById('profileForm');
     const profileStatus = document.getElementById('profileStatus');
     const profileAvatarInput = document.getElementById('profileAvatarInput');
@@ -909,6 +958,9 @@
       if (profileAiQuota) profileAiQuota.textContent = currentUser?.ai_quota ?? '-';
       if (profileForm?.display_name) profileForm.display_name.value = currentUser?.display_name || '';
       if (profileButton) profileButton.classList.toggle('hidden', !(authToken && currentUser));
+      const showPrimeTheme = currentUser?.plan === 'prime';
+      primeThemeWrap?.classList.toggle('hidden', !showPrimeTheme);
+      if (showPrimeTheme) applyPrimeTheme(getPrimeTheme());
       avatarUrl = localStorage.getItem(getAvatarKey()) || '';
       updateAvatarUI();
       if (trialBanner && trialStatusEl) {
@@ -1047,6 +1099,7 @@
       } else {
         document.body.classList.remove('prime-mode');
       }
+      applyPrimeTheme(getPrimeTheme());
 
       tierBadge.classList.remove('tier-chip-prime', 'tier-chip-free');
       let label = 'FinMind v1.0';
@@ -1100,7 +1153,6 @@
     function setAuth(token, user) {
       authToken = token || '';
       currentUser = user || null;
-      currentPlan = currentUser?.plan || localStorage.getItem(PLAN_OVERRIDE_KEY) || 'free';
       if (token && user) {
         localStorage.setItem('finmind_token', token);
         localStorage.setItem('finmind_user', JSON.stringify(user));
@@ -1108,8 +1160,8 @@
         localStorage.removeItem('finmind_token');
         localStorage.removeItem('finmind_user');
         avatarUrl = '';
-        currentPlan = localStorage.getItem(PLAN_OVERRIDE_KEY) || 'free';
       }
+      currentPlan = resolveCurrentPlan();
       resetAdvisorCache();
       isPrime = premiumActive();
       setPrimeVisuals();
@@ -1208,6 +1260,12 @@
 
 
     const formatCurrency = (v) => '$' + Number(v).toLocaleString(undefined, { minimumFractionDigits: 0 });
+    const escapeHTML = (value) => String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
     const calcTotals = () => {
       const assetTotal = state.assets.reduce((sum, a) => sum + Number(a.value), 0);
       const liabilityTotal = state.liabilities.reduce((sum, l) => sum + Number(l.value), 0);
@@ -1227,10 +1285,13 @@
 
       const recent = state.transactions.slice(0, 5).map(t => {
         const color = t.type === 'income' ? 'text-emerald-300' : 'text-rose-300';
+        const title = escapeHTML(t.title);
+        const category = escapeHTML(t.category || 'General');
+        const date = escapeHTML(t.date);
         return `<div class="flex items-center justify-between glass rounded-xl px-3 py-2 border border-white/5">
           <div>
-            <p class="text-slate-100">${t.title}</p>
-            <p class="text-xs text-slate-400">${t.category || 'General'} · ${t.date}</p>
+            <p class="text-slate-100">${title}</p>
+            <p class="text-xs text-slate-400">${category} · ${date}</p>
           </div>
           <span class="${color} font-semibold">${t.type === 'income' ? '+' : '-'}${formatCurrency(Math.abs(t.amount))}</span>
         </div>`;
@@ -1247,8 +1308,8 @@
       const assetList = state.assets.map((a, idx) => `
         <div class="glass rounded-xl px-3 py-2 border border-white/5 flex items-center justify-between gap-3 cursor-pointer hover:border-white/15" data-kind="asset" data-index="${idx}">
           <div class="min-w-0">
-            <p class="text-slate-100 truncate">${a.name}</p>
-            <p class="text-xs text-slate-400 truncate">${a.tag || 'Asset'} · ${a.change || ''}</p>
+            <p class="text-slate-100 truncate">${escapeHTML(a.name)}</p>
+            <p class="text-xs text-slate-400 truncate">${escapeHTML(a.tag || 'Asset')} · ${escapeHTML(a.change || '')}</p>
           </div>
           <div class="flex items-center gap-2 shrink-0">
             <span class="text-emerald-300 font-semibold">${formatCurrency(a.value)}</span>
@@ -1258,8 +1319,8 @@
       const liabilityList = state.liabilities.map((l, idx) => `
         <div class="glass rounded-xl px-3 py-2 border border-white/5 flex items-center justify-between gap-3 cursor-pointer hover:border-white/15" data-kind="liability" data-index="${idx}">
           <div class="min-w-0">
-            <p class="text-slate-100 truncate">${l.name}</p>
-            <p class="text-xs text-slate-400 truncate">${l.tag || 'Liability'} · ${l.change || ''}</p>
+            <p class="text-slate-100 truncate">${escapeHTML(l.name)}</p>
+            <p class="text-xs text-slate-400 truncate">${escapeHTML(l.tag || 'Liability')} · ${escapeHTML(l.change || '')}</p>
           </div>
           <div class="flex items-center gap-2 shrink-0">
             <span class="text-rose-300 font-semibold">-${formatCurrency(l.value)}</span>
@@ -1273,10 +1334,13 @@
     function renderHistory() {
       const history = state.transactions.map((t, idx) => {
         const color = t.type === 'income' ? 'text-emerald-300' : 'text-rose-300';
+        const title = escapeHTML(t.title);
+        const category = escapeHTML(t.category || 'General');
+        const date = escapeHTML(t.date);
         return `<div class="glass rounded-2xl p-3 border border-white/10 flex items-start justify-between gap-3 cursor-pointer hover:border-white/15" data-index="${idx}">
           <div class="min-w-0">
-            <p class="text-sm text-white truncate">${t.title}</p>
-            <p class="text-xs text-slate-400 truncate">${t.category || 'General'} · ${t.date}</p>
+            <p class="text-sm text-white truncate">${title}</p>
+            <p class="text-xs text-slate-400 truncate">${category} · ${date}</p>
           </div>
           <div class="flex items-center gap-2 shrink-0">
             <span class="${color} font-semibold">${t.type === 'income' ? '+' : '-'}${formatCurrency(Math.abs(t.amount))}</span>
@@ -1299,6 +1363,12 @@
           advisorData = null;
           advisorError = '';
           openPaywall("You've used all AI insights this month");
+          return;
+        }
+        if (message.includes('plan_required')) {
+          advisorData = null;
+          advisorError = '';
+          openPaywall('Unlock full advisor insights with FinMind Plus or Prime.');
           return;
         }
         advisorError = message || 'Failed to load advisor insights';
@@ -1349,7 +1419,7 @@
         }
         if (advisorData) {
           const rules = advisorData.rules || [];
-          const llm = advisorData.llm_advice;
+          const llm = advisorData.llm_advice ? escapeHTML(advisorData.llm_advice) : '';
           const cards = [];
           if (llm) {
             cards.push(`
@@ -1370,13 +1440,16 @@
                 info: 'border-cyan-400/70 shadow-[0_0_25px_rgba(6,182,212,0.35)]'
               };
               const border = toneMap[r.severity] || 'border-fuchsia-400/70 shadow-[0_0_25px_rgba(217,70,239,0.35)]';
+              const title = escapeHTML(r.title);
+              const severity = escapeHTML(r.severity);
+              const message = escapeHTML(r.message);
               return `
                 <div class="glass rounded-2xl p-3 border ${border} fade-in-up">
                   <div class="flex items-center justify-between mb-1">
-                    <p class="text-xs uppercase tracking-[0.14em] text-white/70">${r.title}</p>
-                    <span class="text-[10px] text-slate-300">${r.severity}</span>
+                    <p class="text-xs uppercase tracking-[0.14em] text-white/70">${title}</p>
+                    <span class="text-[10px] text-slate-300">${severity}</span>
                   </div>
-                  <p class="text-slate-200 leading-relaxed">${r.message}</p>
+                  <p class="text-slate-200 leading-relaxed">${message}</p>
                 </div>
               `;
             }).join(''));
@@ -1872,6 +1945,11 @@
       };
       reader.readAsDataURL(file);
     });
+    primeThemeSelect?.addEventListener('change', () => {
+      const theme = primeThemeSelect.value;
+      localStorage.setItem(PRIME_THEME_KEY, theme);
+      applyPrimeTheme(theme);
+    });
 
     async function bootstrap() {
       updateAuthButton();
@@ -1880,7 +1958,7 @@
         await hydrateUser();
         await syncFromApi();
       }
-      currentPlan = currentUser?.plan || localStorage.getItem(PLAN_OVERRIDE_KEY) || currentPlan;
+      currentPlan = resolveCurrentPlan();
       updateProfileUI();
       maybeShowTrialExpired();
       setAuthMode('login');

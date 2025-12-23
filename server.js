@@ -191,9 +191,54 @@ function isPlanExpired(user) {
   return Number.isFinite(expiresAt) && expiresAt < Date.now();
 }
 
+function isTrialExpired(user) {
+  if (!user || user.plan !== "trial") return false;
+  if (!user.trial_expires_at) return true;
+  const expiresAt = new Date(user.trial_expires_at).getTime();
+  return !Number.isFinite(expiresAt) || expiresAt <= Date.now();
+}
+
+function isActiveTrial(user) {
+  if (!user || user.plan !== "trial") return false;
+  if (!user.trial_expires_at) return false;
+  const expiresAt = new Date(user.trial_expires_at).getTime();
+  return Number.isFinite(expiresAt) && expiresAt > Date.now();
+}
+
+function isPremiumPlan(user) {
+  return ["plus", "prime"].includes(user?.plan) || isActiveTrial(user);
+}
+
 async function ensureActivePlan(userId) {
   const user = await getUserById(userId);
   if (!user) return null;
+  if (isTrialExpired(user)) {
+    if (!useDb) {
+      const memoryUser = memory.users.find((u) => u.id === userId);
+      if (!memoryUser) return null;
+      memoryUser.plan = "free";
+      memoryUser.ai_quota = 0;
+      memoryUser.ai_quota_remaining = 0;
+      return {
+        id: memoryUser.id,
+        email: memoryUser.email,
+        display_name: memoryUser.display_name,
+        plan: memoryUser.plan,
+        trial_started_at: memoryUser.trial_started_at,
+        trial_expires_at: memoryUser.trial_expires_at,
+        plan_expires_at: memoryUser.plan_expires_at,
+        ai_quota: memoryUser.ai_quota,
+        ai_quota_remaining: memoryUser.ai_quota_remaining,
+      };
+    }
+
+    const { rows } = await pool.query(
+      "UPDATE users SET plan = 'free', ai_quota = 0, ai_quota_remaining = 0 WHERE id = $1 RETURNING id, email, display_name, plan, trial_started_at, trial_expires_at, plan_expires_at, ai_quota, ai_quota_remaining",
+      [userId]
+    );
+    return rows[0] || null;
+  }
+
   if (!isPlanExpired(user) || user.plan === "free") return user;
 
   if (!useDb) {
@@ -684,6 +729,12 @@ app.get("/advisor/insights", async (req, res) => {
 
   const user = await getUserById(userId);
   if (!user) return res.status(404).json({ error: "User not found" });
+  if (!isPremiumPlan(user)) {
+    return res.status(402).json({
+      error: "plan_required",
+      message: "Upgrade to unlock advisor insights",
+    });
+  }
   const remaining = user.ai_quota_remaining ?? null;
   if (user.plan === "plus" && remaining !== null && remaining <= 0) {
     return res.status(402).json({

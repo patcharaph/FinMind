@@ -193,7 +193,7 @@ export async function generateAdvisorAdvice(metrics, rules, lang = "en") {
     metrics,
     rules,
     instruction:
-      "In 4-6 sentences, summarize the user's financial health. Be direct and actionable, highlight key risks, and give 1-2 next steps. If data is sparse, say so briefly and suggest what to track next. Respond in English only.",
+      "In 4-6 sentences, follow this structure: 1) Diagnosis: start with a direct assessment of current status (e.g., Health Score, Burn Rate). 2) Risks: highlight the single biggest risk immediately. 3) Action & Method: provide 1-2 next steps, explicitly naming a financial strategy or method to use (e.g., Debt Avalanche, 50/30/20 rule, DCA). 4) Sparse Data: if data is insufficient, suggest tracking specific missing categories. Respond in English only. Keep it concise but strategic.",
     language: "en",
   };
 
