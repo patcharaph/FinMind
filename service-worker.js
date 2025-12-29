@@ -1,5 +1,12 @@
 const CACHE_NAME = "finmind-static-v1";
-const OFFLINE_URLS = ["/", "/index.html", "/manifest.webmanifest", "/preview.svg"];
+const OFFLINE_URLS = [
+  "/",
+  "/index.html",
+  "/manifest.webmanifest",
+  "/icons/icon-192.png",
+  "/icons/icon-512.png",
+  "/icons/icon-512-maskable.png"
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

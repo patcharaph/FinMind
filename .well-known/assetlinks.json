@@ -1,0 +1,10 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "ai.finmind.app",
+      "sha256_cert_fingerprints": ["C1:90:94:E7:25:E2:A7:9E:15:CC:0A:D7:E1:86:CC:CE:32:EE:64:8E:58:75:BD:3F:A1:93:26:A3:D8:FB:15:4E"]
+    }
+  }
+]
