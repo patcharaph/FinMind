@@ -290,6 +290,9 @@
       align-items: stretch;
       justify-content: flex-end;
       gap: 0;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s ease;
     }
     .swipe-actions button {
       width: 60px;
@@ -316,6 +319,10 @@
     }
     .swipe-row.is-open .swipe-content {
       transform: translateX(-120px);
+    }
+    .swipe-row.is-open .swipe-actions {
+      opacity: 1;
+      pointer-events: auto;
     }
     #paywallModal {
       align-items: flex-start;
