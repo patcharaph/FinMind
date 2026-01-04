@@ -256,6 +256,76 @@
       box-shadow: 0 0 14px rgba(6, 182, 212, 0.45), 0 0 24px rgba(217, 70, 239, 0.35);
       transform: translateY(-1px);
     }
+    .plan-card {
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }
+    .plan-card.is-active {
+      border-color: rgba(34, 211, 238, 0.6);
+      box-shadow: 0 0 18px rgba(6, 182, 212, 0.35);
+      transform: translateY(-1px);
+    }
+    .plan-action {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .plan-action.is-disabled {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+    .swipe-row {
+      position: relative;
+      overflow: hidden;
+      border-radius: 16px;
+    }
+    .swipe-row.rounded-2xl {
+      border-radius: 24px;
+    }
+    .swipe-actions {
+      position: absolute;
+      inset: 0 0 0 auto;
+      width: 120px;
+      display: flex;
+      align-items: stretch;
+      justify-content: flex-end;
+      gap: 0;
+    }
+    .swipe-actions button {
+      width: 60px;
+      border: none;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .swipe-actions .swipe-edit {
+      background: rgba(255, 255, 255, 0.08);
+      color: #e5e7eb;
+      border-left: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .swipe-actions .swipe-delete {
+      background: rgba(239, 68, 68, 0.18);
+      color: #fecaca;
+      border-left: 1px solid rgba(239, 68, 68, 0.35);
+    }
+    .swipe-content {
+      transform: translateX(0);
+      transition: transform 0.18s ease;
+      will-change: transform;
+    }
+    .swipe-row.is-open .swipe-content {
+      transform: translateX(-120px);
+    }
+    #paywallModal {
+      align-items: flex-start;
+      overflow-y: auto;
+      padding: 24px 16px 32px;
+    }
+    .paywall-card {
+      max-height: calc(100vh - 64px);
+      overflow-y: auto;
+    }
     @keyframes goldFloat {
       0%, 100% { opacity: 0.88; transform: translateY(0px); }
       50% { opacity: 1; transform: translateY(-2px); }
@@ -279,9 +349,8 @@
           <h1 id="displayName" class="text-xl font-semibold text-white truncate">Aurora Reyes</h1>
           <p id="displayEmail" class="text-xs text-white/50 truncate hidden"></p>
         <div class="mt-2 flex items-center gap-3">
-          <button id="profileButton" class="text-xs text-white/70 hover:text-white transition hidden">Edit profile</button>
+          <button id="settingsButton" class="text-xs text-white/70 hover:text-white transition">Settings</button>
           <button id="authButton" class="neon-signin text-xs px-3 py-1 rounded-full hidden">Sign In</button>
-          <button id="signOutButton" class="text-xs text-white/70 hover:text-white transition hidden">Sign Out</button>
         </div>
         </div>
       </div>
@@ -312,12 +381,7 @@
                 <p id="netWorth" class="text-3xl font-bold mt-1">$0</p>
                 <p class="text-xs text-white/70 mt-1">Assets - Liabilities</p>
               </div>
-              <button id="refreshNetWorth" class="w-12 h-12 rounded-xl bg-white/15 flex items-center justify-center glow transition hover:bg-white/20 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-white/40" aria-label="Refresh data">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span class="sr-only">Refresh</span>
-              </button>
+              <div class="w-12 h-12 rounded-xl"></div>
             </div>
             <div class="mt-4 grid grid-cols-2 gap-3 text-sm text-white/80">
               <div class="glass rounded-xl p-3 border border-white/20">
@@ -415,6 +479,86 @@
           <button id="openTransactionModalTop" class="text-xs glass px-3 py-1 rounded-full border border-white/10 hover:border-white/20 transition" aria-label="Add transaction">+ Add</button>
         </div>
         <div id="historyList" class="space-y-2"></div>
+      </section>
+
+      <section id="settings" data-section class="hidden space-y-4">
+        <div class="flex items-center justify-between gap-2">
+          <h2 class="text-lg font-semibold text-white">Settings</h2>
+        </div>
+        <div class="glass rounded-2xl p-4 border border-white/10 space-y-3">
+          <p class="text-sm text-slate-200 font-medium">Account Actions</p>
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-slate-200">Edit profile</p>
+              <p class="text-xs text-slate-400">Update name and avatar.</p>
+            </div>
+            <button id="settingsEditProfile" class="text-xs glass px-3 py-1 rounded-full border border-white/10 hover:border-white/20 transition">Edit</button>
+          </div>
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-slate-200">Sign out</p>
+              <p class="text-xs text-slate-400">Sign out from this device.</p>
+            </div>
+            <button id="settingsSignOut" class="text-xs px-3 py-1 rounded-full border border-white/10 text-white/80 hover:text-white hover:border-white/20 transition">Sign Out</button>
+          </div>
+        </div>
+        <div class="glass rounded-2xl p-4 border border-white/10 space-y-3">
+          <div>
+            <p class="text-sm text-slate-200 font-medium">Membership</p>
+            <p id="settingsPlanLabel" class="text-xs text-slate-400">Current plan: FREE</p>
+          </div>
+          <div class="space-y-3">
+            <div class="plan-card glass rounded-2xl p-3" data-plan-card="free">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-xs uppercase tracking-[0.18em] text-emerald-300">Free</p>
+                  <p class="text-xs text-slate-400">Basics to get started.</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-base font-semibold">$0</p>
+                  <p class="text-[10px] text-slate-400">Forever</p>
+                </div>
+              </div>
+              <div class="mt-2 flex items-center justify-between">
+                <p class="text-xs text-slate-300">Best for tracking essentials.</p>
+                <button id="planFreeAction" class="plan-action px-3 py-1 rounded-full border border-white/10 text-white/70">Current</button>
+              </div>
+            </div>
+            <div class="plan-card glass rounded-2xl p-3" data-plan-card="plus">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-xs uppercase tracking-[0.18em] text-fuchsia-300">Plus</p>
+                  <p class="text-xs text-slate-400">Unlimited portfolio + advisor.</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-base font-semibold">$1</p>
+                  <p class="text-[10px] text-slate-400">Monthly</p>
+                </div>
+              </div>
+              <div class="mt-2 flex items-center justify-between">
+                <p class="text-xs text-slate-300">10 AI insights / month.</p>
+                <button id="planPlusAction" class="plan-action px-3 py-1 rounded-full border border-white/10 text-white/90">Choose</button>
+              </div>
+            </div>
+            <div class="plan-card glass rounded-2xl p-3" data-plan-card="prime">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-xs uppercase tracking-[0.18em] text-amber-200">Prime</p>
+                  <p class="text-xs text-slate-400">Premium theme + priority AI.</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-base font-semibold">$2</p>
+                  <p class="text-[10px] text-slate-400">Monthly</p>
+                </div>
+              </div>
+              <div class="mt-2 flex items-center justify-between">
+                <p class="text-xs text-slate-300">Unlimited AI insights.</p>
+                <button id="planPrimeAction" class="plan-action px-3 py-1 rounded-full border border-white/10 text-white/90">Choose</button>
+              </div>
+            </div>
+          </div>
+          <p id="settingsPlanHint" class="text-xs text-slate-400">Upgrade anytime or cancel from your active plan.</p>
+        </div>
       </section>
     </main>
 
@@ -598,7 +742,8 @@
 
     <div id="paywallModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden">
       <div class="prime-border w-full max-w-md mx-auto">
-        <div class="prime-card p-6 relative">
+        <div class="prime-card paywall-card p-6 relative">
+          <button id="backPaywall" class="absolute top-3 left-3 text-slate-400 hover:text-white transition" aria-label="Back">&larr;</button>
           <button id="closePaywall" class="absolute top-3 right-3 text-slate-400 hover:text-white transition">&times;</button>
           <div class="space-y-4 text-white">
             <div class="text-center space-y-2">
@@ -607,7 +752,7 @@
               <p id="paywallMessage" class="text-slate-300 text-sm">You are doing well tracking money, but advanced insights are locked.</p>
             </div>
 
-            <div class="glass rounded-2xl p-4 border border-white/10">
+            <div id="paywallFreeCard" class="glass rounded-2xl p-4 border border-white/10">
               <div class="flex items-center justify-between">
                 <div>
                   <p class="text-xs uppercase tracking-[0.18em] text-emerald-300">You’re on: Free Plan</p>
@@ -635,7 +780,7 @@
               <button id="startTrial" class="mt-4 w-full border border-white/15 text-white/80 py-2 rounded-xl hover:border-white/30 hover:text-white transition">Start 7-Day Free Trial</button>
             </div>
 
-            <div class="glass rounded-2xl p-4 border border-fuchsia-400/40 shadow-[0_0_30px_rgba(217,70,239,0.25)]">
+            <div id="paywallPlusCard" class="glass rounded-2xl p-4 border border-fuchsia-400/40 shadow-[0_0_30px_rgba(217,70,239,0.25)]">
               <div class="flex items-center justify-between">
                 <div>
                   <p class="text-xs uppercase tracking-[0.18em] text-fuchsia-300">Recommended</p>
@@ -660,9 +805,9 @@
               <button id="upgradePlus" class="mt-4 w-full bg-gradient-to-r from-[#d946ef] via-[#7c3aed] to-[#06b6d4] text-white font-semibold py-3 rounded-xl prime-cta">Upgrade to Plus</button>
             </div>
 
-            <div class="text-center text-xs text-white/40">──────── or ────────</div>
+            <div id="paywallDivider" class="text-center text-xs text-white/40">──────── or ────────</div>
 
-            <div class="glass rounded-2xl p-4 border border-white/10">
+            <div id="paywallPrimeCard" class="glass rounded-2xl p-4 border border-white/10">
               <div class="flex items-center justify-between">
                 <div>
                   <p class="text-xs uppercase tracking-[0.18em] text-white/70">Prime — $2 / month</p>
@@ -908,7 +1053,21 @@
     const authModeSignUp = document.getElementById('authModeSignUp');
     const displayNameField = document.getElementById('displayNameField');
     const authSubmit = document.getElementById('authSubmit');
-    const refreshNetWorthBtn = document.getElementById('refreshNetWorth');
+    const refreshNetWorthBtn = null;
+    const settingsButton = document.getElementById('settingsButton');
+    const settingsEditProfile = document.getElementById('settingsEditProfile');
+    const settingsSignOut = document.getElementById('settingsSignOut');
+    const settingsPlanLabel = document.getElementById('settingsPlanLabel');
+    const settingsPlanHint = document.getElementById('settingsPlanHint');
+    const settingsCancelPlan = document.getElementById('settingsCancelPlan');
+    const planFreeAction = document.getElementById('planFreeAction');
+    const planPlusAction = document.getElementById('planPlusAction');
+    const planPrimeAction = document.getElementById('planPrimeAction');
+    const planCards = document.querySelectorAll('[data-plan-card]');
+    const paywallFreeCard = document.getElementById('paywallFreeCard');
+    const paywallPlusCard = document.getElementById('paywallPlusCard');
+    const paywallPrimeCard = document.getElementById('paywallPrimeCard');
+    const paywallDivider = document.getElementById('paywallDivider');
     const addChooser = document.getElementById('addChooser');
     const quickAddTransaction = document.getElementById('quickAddTransaction');
     const quickAddAsset = document.getElementById('quickAddAsset');
@@ -921,6 +1080,8 @@
     let advisorLoading = false;
     let advisorError = '';
     let advisorData = null; // { metrics, rules, llm_advice }
+    let advisorRequested = false;
+    let paywallOpen = false;
     let editingAsset = null; // { kind: 'asset'|'liability', index: number }
     let editingTransaction = null; // number index in state.transactions
     let authMode = 'login';
@@ -1030,6 +1191,34 @@
       }
       updateDisplayName();
       updateDisplayEmail();
+      updateSettingsUI();
+    }
+
+    function updateSettingsUI() {
+      if (settingsSignOut) {
+        settingsSignOut.classList.toggle('hidden', !(authToken && currentUser));
+      }
+      let plan = (currentUser?.plan || currentPlan || 'free').toLowerCase();
+      if (plan === 'trial') plan = 'free';
+      if (settingsPlanLabel) settingsPlanLabel.textContent = `Current plan: ${plan.toUpperCase()}`;
+      if (settingsPlanHint) {
+        settingsPlanHint.textContent = plan === 'free'
+          ? 'Upgrade anytime or start a trial.'
+          : 'Cancel to return to Free at the end of the period.';
+      }
+      planCards?.forEach((card) => {
+        card.classList.toggle('is-active', card.dataset.planCard === plan);
+      });
+      if (planFreeAction) {
+        planFreeAction.textContent = plan === 'free' ? 'Current' : 'Switch';
+        planFreeAction.classList.toggle('is-disabled', plan === 'free');
+      }
+      if (planPlusAction) {
+        planPlusAction.textContent = plan === 'plus' ? 'Cancel' : 'Choose';
+      }
+      if (planPrimeAction) {
+        planPrimeAction.textContent = plan === 'prime' ? 'Cancel' : 'Choose';
+      }
     }
 
     function maybeShowTrialExpired() {
@@ -1201,11 +1390,22 @@
     function openPaywall(message = paywallReason) {
       paywallReason = message;
       if (paywallMessageEl) paywallMessageEl.textContent = message;
+      const plan = currentUser?.plan || currentPlan || 'free';
+      const isPlus = plan === 'plus';
+      const showFree = !isPlus;
+      const showPlus = !isPlus;
+      const showPrime = true;
+      paywallFreeCard?.classList.toggle('hidden', !showFree);
+      paywallPlusCard?.classList.toggle('hidden', !showPlus);
+      paywallDivider?.classList.toggle('hidden', !showPlus);
+      paywallPrimeCard?.classList.toggle('hidden', !showPrime);
+      paywallOpen = true;
       paywallModal.classList.remove('hidden');
     }
 
     function closePaywall() {
       paywallModal.classList.add('hidden');
+      paywallOpen = false;
     }
 
     function checkPrimeStatus(reason) {
@@ -1263,16 +1463,36 @@
       if (!authButton) return;
       if (authToken && currentUser) {
         authButton.classList.add('hidden');
+        settingsButton?.classList.remove('hidden');
       } else {
         authButton.textContent = 'Sign In';
         authButton.classList.remove('hidden');
         authButton.classList.remove('border-emerald-400/60', 'text-emerald-200');
+        settingsButton?.classList.add('hidden');
       }
     }
 
     function updateSignOutVisibility() {
       if (!signOutButton) return;
       signOutButton.classList.toggle('hidden', !(authToken && currentUser));
+      updateSettingsUI();
+    }
+
+    function cancelPlan() {
+      const plan = currentUser?.plan || currentPlan || 'free';
+      if (plan === 'free') return;
+      const confirmed = window.confirm('Cancel your plan and return to Free?');
+      if (!confirmed) return;
+      if (useApi && authToken) {
+        alert('Please contact support to cancel your plan.');
+        return;
+      }
+      localStorage.setItem(PLAN_OVERRIDE_KEY, 'free');
+      currentPlan = 'free';
+      premiumActive();
+      setPrimeVisuals();
+      updateProfileUI();
+      renderAdvisor();
     }
 
     function openAuthModal() {
@@ -1317,10 +1537,6 @@
 
     function setRefreshing(state) {
       refreshing = state;
-      if (!refreshNetWorthBtn) return;
-      refreshNetWorthBtn.disabled = state;
-      refreshNetWorthBtn.classList.toggle('opacity-70', state);
-      refreshNetWorthBtn.querySelector('svg')?.classList.toggle('animate-spin', state);
     }
 
     function setAuthMode(mode) {
@@ -1388,29 +1604,43 @@
       document.getElementById('liabilitiesTotal').textContent = formatCurrency(liabilityTotal);
 
       const assetList = state.assets.map((a, idx) => `
-        <div class="glass rounded-xl px-3 py-2 border border-white/5 flex items-center justify-between gap-3 cursor-pointer hover:border-white/15" data-kind="asset" data-index="${idx}">
-          <div class="min-w-0">
-            <p class="text-slate-100 truncate">${escapeHTML(a.name)}</p>
-            <p class="text-xs text-slate-400 truncate">${escapeHTML(a.tag || 'Asset')} · ${escapeHTML(a.change || '')}</p>
+        <div class="swipe-row" data-kind="asset" data-index="${idx}">
+          <div class="swipe-actions">
+            <button type="button" class="swipe-edit" data-action="edit">Edit</button>
+            <button type="button" class="swipe-delete" data-action="delete">Delete</button>
           </div>
-          <div class="flex items-center gap-2 shrink-0">
-            <span class="text-emerald-300 font-semibold">${formatCurrency(a.value)}</span>
+          <div class="swipe-content glass rounded-xl px-3 py-2 border border-white/5 flex items-center justify-between gap-3 cursor-pointer hover:border-white/15">
+            <div class="min-w-0">
+              <p class="text-slate-100 truncate">${escapeHTML(a.name)}</p>
+              <p class="text-xs text-slate-400 truncate">${escapeHTML(a.tag || 'Asset')} · ${escapeHTML(a.change || '')}</p>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="text-emerald-300 font-semibold">${formatCurrency(a.value)}</span>
+            </div>
           </div>
         </div>
       `).join('');
       const liabilityList = state.liabilities.map((l, idx) => `
-        <div class="glass rounded-xl px-3 py-2 border border-white/5 flex items-center justify-between gap-3 cursor-pointer hover:border-white/15" data-kind="liability" data-index="${idx}">
-          <div class="min-w-0">
-            <p class="text-slate-100 truncate">${escapeHTML(l.name)}</p>
-            <p class="text-xs text-slate-400 truncate">${escapeHTML(l.tag || 'Liability')} · ${escapeHTML(l.change || '')}</p>
+        <div class="swipe-row" data-kind="liability" data-index="${idx}">
+          <div class="swipe-actions">
+            <button type="button" class="swipe-edit" data-action="edit">Edit</button>
+            <button type="button" class="swipe-delete" data-action="delete">Delete</button>
           </div>
-          <div class="flex items-center gap-2 shrink-0">
-            <span class="text-rose-300 font-semibold">-${formatCurrency(l.value)}</span>
+          <div class="swipe-content glass rounded-xl px-3 py-2 border border-white/5 flex items-center justify-between gap-3 cursor-pointer hover:border-white/15">
+            <div class="min-w-0">
+              <p class="text-slate-100 truncate">${escapeHTML(l.name)}</p>
+              <p class="text-xs text-slate-400 truncate">${escapeHTML(l.tag || 'Liability')} · ${escapeHTML(l.change || '')}</p>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="text-rose-300 font-semibold">-${formatCurrency(l.value)}</span>
+            </div>
           </div>
         </div>
       `).join('');
       document.getElementById('assetList').innerHTML = assetList || '<p class="text-slate-400 text-sm">Add your first asset.</p>';
       document.getElementById('liabilityList').innerHTML = liabilityList || '<p class="text-slate-400 text-sm">Add a liability.</p>';
+      initSwipeRows(document.getElementById('assetList'));
+      initSwipeRows(document.getElementById('liabilityList'));
     }
 
     function renderHistory() {
@@ -1419,21 +1649,29 @@
         const title = escapeHTML(t.title);
         const category = escapeHTML(t.category || 'General');
         const date = escapeHTML(t.date);
-        return `<div class="glass rounded-2xl p-3 border border-white/10 flex items-start justify-between gap-3 cursor-pointer hover:border-white/15" data-index="${idx}">
-          <div class="min-w-0">
-            <p class="text-sm text-white truncate">${title}</p>
-            <p class="text-xs text-slate-400 truncate">${category} · ${date}</p>
-          </div>
-          <div class="flex items-center gap-2 shrink-0">
-            <span class="${color} font-semibold">${t.type === 'income' ? '+' : '-'}${formatCurrency(Math.abs(t.amount))}</span>
-          </div>
-        </div>`;
+        return `
+          <div class="swipe-row rounded-2xl" data-index="${idx}">
+            <div class="swipe-actions">
+              <button type="button" class="swipe-edit" data-action="edit">Edit</button>
+              <button type="button" class="swipe-delete" data-action="delete">Delete</button>
+            </div>
+            <div class="swipe-content glass rounded-2xl p-3 border border-white/10 flex items-start justify-between gap-3 cursor-pointer hover:border-white/15">
+              <div class="min-w-0">
+                <p class="text-sm text-white truncate">${title}</p>
+                <p class="text-xs text-slate-400 truncate">${category} · ${date}</p>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <span class="${color} font-semibold">${t.type === 'income' ? '+' : '-'}${formatCurrency(Math.abs(t.amount))}</span>
+              </div>
+            </div>
+          </div>`;
       }).join('');
       document.getElementById('historyList').innerHTML = history || '<p class="text-slate-400 text-sm">No history yet.</p>';
+      initSwipeRows(document.getElementById('historyList'));
     }
 
     async function loadAdvisorInsights() {
-      if (!useApi || !authToken || advisorLoading) return;
+      if (!useApi || !authToken || advisorLoading || paywallOpen) return;
       advisorLoading = true;
       advisorError = '';
       renderAdvisor();
@@ -1485,7 +1723,13 @@
         return;
       }
       if (advisorLock) advisorLock.classList.add('hidden');
-      const shouldFetchApi = useApi && authToken && !advisorData && !advisorLoading;
+      const shouldFetchApi = useApi
+        && authToken
+        && advisorRequested
+        && !paywallOpen
+        && activeSection === 'advisor'
+        && !advisorData
+        && !advisorLoading;
       if (shouldFetchApi) loadAdvisorInsights();
 
       if (useApi && authToken) {
@@ -1764,6 +2008,87 @@
       }
     }
 
+    const SWIPE_MAX = 120;
+    let activeSwipeRow = null;
+
+    function initSwipeRows(container) {
+      if (!container) return;
+      const rows = container.querySelectorAll('.swipe-row');
+      rows.forEach((row) => {
+        row.dataset.swipeX = '0';
+        row.classList.remove('is-open');
+        const content = row.querySelector('.swipe-content');
+        if (content) content.style.transform = 'translateX(0px)';
+        attachSwipeHandlers(row);
+      });
+    }
+
+    function attachSwipeHandlers(row) {
+      let startX = 0;
+      let startTranslate = 0;
+      let isSwiping = false;
+      const content = row.querySelector('.swipe-content');
+      if (!content) return;
+
+      row.addEventListener('pointerdown', (e) => {
+        if (e.target.closest('[data-action]')) return;
+        isSwiping = true;
+        startX = e.clientX;
+        startTranslate = Number(row.dataset.swipeX || '0');
+        if (activeSwipeRow && activeSwipeRow !== row) {
+          closeSwipe(activeSwipeRow);
+        }
+        row.setPointerCapture(e.pointerId);
+      });
+
+      row.addEventListener('pointermove', (e) => {
+        if (!isSwiping) return;
+        const delta = e.clientX - startX;
+        const next = Math.min(0, Math.max(-SWIPE_MAX, startTranslate + delta));
+        row.dataset.swipeX = String(next);
+        content.style.transform = `translateX(${next}px)`;
+      });
+
+      const endSwipe = (e) => {
+        if (!isSwiping) return;
+        isSwiping = false;
+        const current = Number(row.dataset.swipeX || '0');
+        if (current <= -SWIPE_MAX / 2) {
+          openSwipe(row);
+        } else {
+          closeSwipe(row);
+        }
+        row.releasePointerCapture(e.pointerId);
+      };
+
+      row.addEventListener('pointerup', endSwipe);
+      row.addEventListener('pointercancel', endSwipe);
+    }
+
+    function openSwipe(row) {
+      const content = row.querySelector('.swipe-content');
+      if (!content) return;
+      row.classList.add('is-open');
+      row.dataset.swipeX = String(-SWIPE_MAX);
+      content.style.transform = `translateX(${-SWIPE_MAX}px)`;
+      activeSwipeRow = row;
+    }
+
+    function closeSwipe(row) {
+      const content = row.querySelector('.swipe-content');
+      if (!content) return;
+      row.classList.remove('is-open');
+      row.dataset.swipeX = '0';
+      content.style.transform = 'translateX(0px)';
+      if (activeSwipeRow === row) activeSwipeRow = null;
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!activeSwipeRow) return;
+      if (activeSwipeRow.contains(e.target)) return;
+      closeSwipe(activeSwipeRow);
+    });
+
     document.getElementById('transactionForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const form = e.target;
@@ -1915,13 +2240,59 @@
       handleBackNavigation();
     });
 
-    navButtons.forEach(btn => btn.addEventListener('click', () => switchSection(btn.dataset.target)));
+    navButtons.forEach(btn => btn.addEventListener('click', () => {
+      if (btn.dataset.target === 'advisor') {
+        advisorRequested = true;
+      }
+      switchSection(btn.dataset.target);
+    }));
+    settingsButton?.addEventListener('click', () => switchSection('settings'));
     document.getElementById('analyzeCTA').addEventListener('click', () => checkPrimeStatus('Unlock AI Advisor to generate live intelligence.'));
     document.getElementById('closePaywall').addEventListener('click', closePaywall);
+    document.getElementById('backPaywall')?.addEventListener('click', closePaywall);
     document.getElementById('startTrial')?.addEventListener('click', () => startTrial());
     authButton?.addEventListener('click', () => {
       if (authToken) return; // signed in -> use Sign Out button instead
       openAuthModal();
+    });
+    settingsEditProfile?.addEventListener('click', openProfileModal);
+    settingsSignOut?.addEventListener('click', () => {
+      setAuth('', null);
+      renderDashboard();
+      renderAssets();
+      renderHistory();
+      renderAdvisor();
+      openAuthModal();
+    });
+    settingsCancelPlan?.addEventListener('click', cancelPlan);
+    planFreeAction?.addEventListener('click', () => {
+      const plan = (currentUser?.plan || currentPlan || 'free').toLowerCase();
+      if (plan === 'free') return;
+      cancelPlan();
+    });
+    planPlusAction?.addEventListener('click', () => {
+      const plan = (currentUser?.plan || currentPlan || 'free').toLowerCase();
+      if (plan === 'plus') {
+        cancelPlan();
+        return;
+      }
+      if (useApi && !authToken) {
+        openAuthModal();
+        return;
+      }
+      openBillingModal('plus');
+    });
+    planPrimeAction?.addEventListener('click', () => {
+      const plan = (currentUser?.plan || currentPlan || 'free').toLowerCase();
+      if (plan === 'prime') {
+        cancelPlan();
+        return;
+      }
+      if (useApi && !authToken) {
+        openAuthModal();
+        return;
+      }
+      openBillingModal('prime');
     });
     signOutButton?.addEventListener('click', () => {
       setAuth('', null);
@@ -1969,46 +2340,60 @@
         }
       }
     });
-    refreshNetWorthBtn?.addEventListener('click', async () => {
-      if (refreshing) return;
-      setRefreshing(true);
-      authErrorEl?.classList.add('hidden');
-      try {
-        if (useApi) {
-          if (!authToken) { openAuthModal(); return; }
-          await hydrateUser();
-          await syncFromApi();
-        }
-        renderDashboard();
-        renderAssets();
-        renderHistory();
-        renderAdvisor();
-      } catch (err) {
-        console.error('Refresh failed', err);
-        if (authErrorEl) {
-          authErrorEl.textContent = err.message || 'Refresh failed';
-          authErrorEl.classList.remove('hidden');
-        }
-      } finally {
-        setRefreshing(false);
-      }
-    });
     document.getElementById('assetList').addEventListener('click', (e) => {
-      const card = e.target.closest('[data-kind][data-index]');
-      if (!card) return;
-      const { kind, index } = card.dataset;
+      const action = e.target.closest('[data-action]');
+      const row = e.target.closest('[data-kind][data-index]');
+      if (!row) return;
+      if (action) {
+        const { kind, index } = row.dataset;
+        if (action.dataset.action === 'edit') {
+          openAssetModal(kind, Number(index));
+        } else if (action.dataset.action === 'delete') {
+          const confirmed = window.confirm('Delete this entry?');
+          if (confirmed) deleteAsset(kind, Number(index));
+        }
+        closeSwipe(row);
+        return;
+      }
+      if (row.classList.contains('is-open')) return;
+      const { kind, index } = row.dataset;
       openAssetModal(kind, Number(index));
     });
     document.getElementById('liabilityList').addEventListener('click', (e) => {
-      const card = e.target.closest('[data-kind][data-index]');
-      if (!card) return;
-      const { kind, index } = card.dataset;
+      const action = e.target.closest('[data-action]');
+      const row = e.target.closest('[data-kind][data-index]');
+      if (!row) return;
+      if (action) {
+        const { kind, index } = row.dataset;
+        if (action.dataset.action === 'edit') {
+          openAssetModal(kind, Number(index));
+        } else if (action.dataset.action === 'delete') {
+          const confirmed = window.confirm('Delete this entry?');
+          if (confirmed) deleteAsset(kind, Number(index));
+        }
+        closeSwipe(row);
+        return;
+      }
+      if (row.classList.contains('is-open')) return;
+      const { kind, index } = row.dataset;
       openAssetModal(kind, Number(index));
     });
     document.getElementById('historyList').addEventListener('click', (e) => {
-      const card = e.target.closest('[data-index]');
-      if (!card) return;
-      const idx = Number(card.dataset.index);
+      const action = e.target.closest('[data-action]');
+      const row = e.target.closest('[data-index]');
+      if (!row) return;
+      const idx = Number(row.dataset.index);
+      if (action) {
+        if (action.dataset.action === 'edit') {
+          openTransactionModal(idx);
+        } else if (action.dataset.action === 'delete') {
+          const confirmed = window.confirm('Delete this transaction?');
+          if (confirmed) deleteTransaction(idx);
+        }
+        closeSwipe(row);
+        return;
+      }
+      if (row.classList.contains('is-open')) return;
       openTransactionModal(idx);
     });
     quickAddTransaction?.addEventListener('click', () => { closeAddChooser(); openTransactionModal(); });
