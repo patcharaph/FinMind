@@ -914,7 +914,9 @@
     const quickAddAsset = document.getElementById('quickAddAsset');
     const quickAddLiability = document.getElementById('quickAddLiability');
     const floatingUpgrade = document.getElementById('floatingUpgrade');
-    let activeSection = 'home';
+    const HOME_SECTION = 'home';
+    const EXIT_CONFIRM_MESSAGE = 'ยืนยันออกจากแอป?';
+    let activeSection = HOME_SECTION;
     let advisorTimer = null;
     let advisorLoading = false;
     let advisorError = '';
@@ -926,6 +928,7 @@
     let avatarUrl = '';
     let selectedPlan = 'plus';
     let billingCycle = 'monthly';
+    let allowExit = false;
 
     function resetAdvisorCache() {
       advisorData = null;
@@ -1605,6 +1608,7 @@
         return;
       }
       activeSection = id;
+      allowExit = false;
       const visible = activeSection;
       sections.forEach(section => {
         section.classList.toggle('hidden', section.id !== visible);
@@ -1614,6 +1618,27 @@
         btn.classList.toggle('text-slate-300', btn.dataset.target !== visible);
       });
       if (visible === 'advisor') renderAdvisor();
+    }
+
+    function ensureExitGuard() {
+      if (history.state && history.state.finmindExitGuard) return;
+      const url = window.location.pathname + window.location.search;
+      history.pushState({ finmindExitGuard: true }, '', url);
+    }
+
+    function handleBackNavigation() {
+      if (activeSection !== HOME_SECTION) {
+        switchSection(HOME_SECTION);
+        ensureExitGuard();
+        return;
+      }
+      const shouldExit = window.confirm(EXIT_CONFIRM_MESSAGE);
+      if (shouldExit) {
+        allowExit = true;
+        history.back();
+        return;
+      }
+      ensureExitGuard();
     }
 
     function openTransactionModal(editIndex = null) {
@@ -1883,6 +1908,12 @@
     document.querySelector('[data-close-add]')?.addEventListener('click', closeAddChooser);
     profileModal?.addEventListener('click', (e) => { if (e.target.id === 'profileModal') closeProfileModal(); });
     document.querySelector('[data-close-profile]')?.addEventListener('click', closeProfileModal);
+
+    ensureExitGuard();
+    window.addEventListener('popstate', () => {
+      if (allowExit) return;
+      handleBackNavigation();
+    });
 
     navButtons.forEach(btn => btn.addEventListener('click', () => switchSection(btn.dataset.target)));
     document.getElementById('analyzeCTA').addEventListener('click', () => checkPrimeStatus('Unlock AI Advisor to generate live intelligence.'));
