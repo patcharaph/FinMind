@@ -2026,6 +2026,11 @@
         row.classList.remove('is-open');
         const content = row.querySelector('.swipe-content');
         if (content) content.style.transform = 'translateX(0px)';
+        const actions = row.querySelector('.swipe-actions');
+        if (actions) {
+          actions.style.opacity = '0';
+          actions.style.pointerEvents = 'none';
+        }
         attachSwipeHandlers(row);
       });
     }
@@ -2035,6 +2040,7 @@
       let startTranslate = 0;
       let isSwiping = false;
       const content = row.querySelector('.swipe-content');
+      const actions = row.querySelector('.swipe-actions');
       if (!content) return;
 
       row.addEventListener('pointerdown', (e) => {
@@ -2054,6 +2060,11 @@
         const next = Math.min(0, Math.max(-SWIPE_MAX, startTranslate + delta));
         row.dataset.swipeX = String(next);
         content.style.transform = `translateX(${next}px)`;
+        if (actions) {
+          const progress = Math.min(1, Math.abs(next) / SWIPE_MAX);
+          actions.style.opacity = String(progress);
+          actions.style.pointerEvents = progress > 0.05 ? 'auto' : 'none';
+        }
       });
 
       const endSwipe = (e) => {
@@ -2074,19 +2085,29 @@
 
     function openSwipe(row) {
       const content = row.querySelector('.swipe-content');
+      const actions = row.querySelector('.swipe-actions');
       if (!content) return;
       row.classList.add('is-open');
       row.dataset.swipeX = String(-SWIPE_MAX);
       content.style.transform = `translateX(${-SWIPE_MAX}px)`;
+      if (actions) {
+        actions.style.opacity = '1';
+        actions.style.pointerEvents = 'auto';
+      }
       activeSwipeRow = row;
     }
 
     function closeSwipe(row) {
       const content = row.querySelector('.swipe-content');
+      const actions = row.querySelector('.swipe-actions');
       if (!content) return;
       row.classList.remove('is-open');
       row.dataset.swipeX = '0';
       content.style.transform = 'translateX(0px)';
+      if (actions) {
+        actions.style.opacity = '0';
+        actions.style.pointerEvents = 'none';
+      }
       if (activeSwipeRow === row) activeSwipeRow = null;
     }
 

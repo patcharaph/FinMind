@@ -1,0 +1,4 @@
+#Mon Jan 05 01:39:27 ICT 2026
+base.0=D\:\\GitHub\\FinMind\\app\\build\\intermediates\\dex\\release\\minifyReleaseWithR8\\classes.dex
+renamed.0=classes.dex
+path.0=classes.dex
