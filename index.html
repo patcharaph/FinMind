@@ -205,6 +205,25 @@
       background-color: #0b0f1a;
       color: #e5e7eb;
     }
+    [data-section] {
+      transition: opacity 0.28s ease, transform 0.28s ease;
+    }
+    [data-section].is-entering {
+      opacity: 0;
+      transform: translateX(12px);
+    }
+    [data-section].is-exiting {
+      opacity: 0;
+      transform: translateX(-12px);
+    }
+    [data-section].is-back-entering {
+      opacity: 0;
+      transform: translateX(-12px);
+    }
+    [data-section].is-back-exiting {
+      opacity: 0;
+      transform: translateX(12px);
+    }
     .neon-signin {
       color: #e0fbff;
       background: linear-gradient(120deg, rgba(34, 211, 238, 0.25), rgba(168, 85, 247, 0.18));
@@ -278,6 +297,7 @@
       position: relative;
       overflow: hidden;
       border-radius: 16px;
+      touch-action: pan-y;
     }
     .swipe-row.rounded-2xl {
       border-radius: 24px;
@@ -1081,7 +1101,7 @@
     const quickAddLiability = document.getElementById('quickAddLiability');
     const floatingUpgrade = document.getElementById('floatingUpgrade');
     const HOME_SECTION = 'home';
-    const EXIT_CONFIRM_MESSAGE = 'ยืนยันออกจากแอป?';
+    const EXIT_CONFIRM_MESSAGE = 'Exit the app?';
     let activeSection = HOME_SECTION;
     let advisorTimer = null;
     let advisorLoading = false;
@@ -1853,17 +1873,46 @@
       }, 900);
     }
 
-    function switchSection(id) {
+    function switchSection(id, options = {}) {
       if (id === 'add') {
         openAddChooser();
         return;
       }
+      if (activeSection === id) return;
+      const { animate = false, direction = 'forward' } = options;
+      const prevId = activeSection;
       activeSection = id;
       allowExit = false;
       const visible = activeSection;
-      sections.forEach(section => {
-        section.classList.toggle('hidden', section.id !== visible);
-      });
+      if (animate) {
+        const prevSection = document.getElementById(prevId);
+        const nextSection = document.getElementById(visible);
+        const enterClass = direction === 'back' ? 'is-back-entering' : 'is-entering';
+        const exitClass = direction === 'back' ? 'is-back-exiting' : 'is-exiting';
+        sections.forEach(section => {
+          if (section.id !== visible && section.id !== prevId) {
+            section.classList.add('hidden');
+          }
+        });
+        if (nextSection) {
+          nextSection.classList.remove('hidden', 'is-entering', 'is-exiting', 'is-back-entering', 'is-back-exiting');
+          nextSection.classList.add(enterClass);
+          requestAnimationFrame(() => nextSection.classList.remove(enterClass));
+        }
+        if (prevSection) {
+          prevSection.classList.remove('is-entering', 'is-exiting', 'is-back-entering', 'is-back-exiting');
+          prevSection.classList.add(exitClass);
+          setTimeout(() => {
+            prevSection.classList.add('hidden');
+            prevSection.classList.remove(exitClass);
+          }, 280);
+        }
+      } else {
+        sections.forEach(section => {
+          section.classList.toggle('hidden', section.id !== visible);
+          section.classList.remove('is-entering', 'is-exiting', 'is-back-entering', 'is-back-exiting');
+        });
+      }
       navButtons.forEach(btn => {
         btn.classList.toggle('text-white', btn.dataset.target === visible);
         btn.classList.toggle('text-slate-300', btn.dataset.target !== visible);
@@ -1879,7 +1928,7 @@
 
     function handleBackNavigation() {
       if (activeSection !== HOME_SECTION) {
-        switchSection(HOME_SECTION);
+        switchSection(HOME_SECTION, { animate: true, direction: 'back' });
         ensureExitGuard();
         return;
       }
@@ -2042,21 +2091,17 @@
       const content = row.querySelector('.swipe-content');
       const actions = row.querySelector('.swipe-actions');
       if (!content) return;
-
-      row.addEventListener('pointerdown', (e) => {
-        if (e.target.closest('[data-action]')) return;
+      const startSwipe = (clientX) => {
         isSwiping = true;
-        startX = e.clientX;
+        startX = clientX;
         startTranslate = Number(row.dataset.swipeX || '0');
         if (activeSwipeRow && activeSwipeRow !== row) {
           closeSwipe(activeSwipeRow);
         }
-        row.setPointerCapture(e.pointerId);
-      });
-
-      row.addEventListener('pointermove', (e) => {
+      };
+      const moveSwipe = (clientX) => {
         if (!isSwiping) return;
-        const delta = e.clientX - startX;
+        const delta = clientX - startX;
         const next = Math.min(0, Math.max(-SWIPE_MAX, startTranslate + delta));
         row.dataset.swipeX = String(next);
         content.style.transform = `translateX(${next}px)`;
@@ -2065,9 +2110,8 @@
           actions.style.opacity = String(progress);
           actions.style.pointerEvents = progress > 0.05 ? 'auto' : 'none';
         }
-      });
-
-      const endSwipe = (e) => {
+      };
+      const endSwipe = () => {
         if (!isSwiping) return;
         isSwiping = false;
         const current = Number(row.dataset.swipeX || '0');
@@ -2076,11 +2120,42 @@
         } else {
           closeSwipe(row);
         }
+      };
+
+      row.addEventListener('pointerdown', (e) => {
+        if (e.target.closest('[data-action]')) return;
+        startSwipe(e.clientX);
+        row.setPointerCapture(e.pointerId);
+      });
+
+      row.addEventListener('pointermove', (e) => {
+        moveSwipe(e.clientX);
+      });
+
+      const endPointerSwipe = (e) => {
+        if (!isSwiping) return;
+        endSwipe();
         row.releasePointerCapture(e.pointerId);
       };
 
-      row.addEventListener('pointerup', endSwipe);
-      row.addEventListener('pointercancel', endSwipe);
+      row.addEventListener('pointerup', endPointerSwipe);
+      row.addEventListener('pointercancel', endPointerSwipe);
+
+      row.addEventListener('touchstart', (e) => {
+        if (e.target.closest('[data-action]')) return;
+        if (!e.touches || !e.touches[0]) return;
+        startSwipe(e.touches[0].clientX);
+      }, { passive: true });
+      row.addEventListener('touchmove', (e) => {
+        if (!e.touches || !e.touches[0]) return;
+        const delta = e.touches[0].clientX - startX;
+        if (Math.abs(delta) > 6) {
+          e.preventDefault();
+        }
+        moveSwipe(e.touches[0].clientX);
+      }, { passive: false });
+      row.addEventListener('touchend', endSwipe);
+      row.addEventListener('touchcancel', endSwipe);
     }
 
     function openSwipe(row) {
