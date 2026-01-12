@@ -850,7 +850,6 @@
 
             <div class="text-xs text-slate-400 text-center">
               Cancel anytime • No lock-in
-              <button class="ml-2 text-white/70 hover:text-white transition" id="stayFree">Stay on Free</button>
             </div>
           </div>
         </div>
@@ -1103,6 +1102,7 @@
     const HOME_SECTION = 'home';
     const EXIT_CONFIRM_MESSAGE = 'Exit the app?';
     let activeSection = HOME_SECTION;
+    let sectionHistory = [HOME_SECTION];
     let advisorTimer = null;
     let advisorLoading = false;
     let advisorError = '';
@@ -1395,6 +1395,9 @@
       tierBadge.classList.remove('tier-chip-prime', 'tier-chip-free');
       let label = 'FinMind v1.0';
       const plan = currentUser?.plan || currentPlan;
+      if (floatingUpgrade) {
+        floatingUpgrade.classList.toggle('hidden', plan === 'prime');
+      }
       if (!isPaidPlan() && (hasActiveTrial() || plan === 'trial')) {
         label = 'FINMIND FREE TRIAL';
         tierBadge.classList.add('tier-chip-prime');
@@ -1879,7 +1882,7 @@
         return;
       }
       if (activeSection === id) return;
-      const { animate = false, direction = 'forward' } = options;
+      const { animate = false, direction = 'forward', pushHistory = true } = options;
       const prevId = activeSection;
       activeSection = id;
       allowExit = false;
@@ -1918,27 +1921,16 @@
         btn.classList.toggle('text-slate-300', btn.dataset.target !== visible);
       });
       if (visible === 'advisor') renderAdvisor();
+      if (pushHistory) {
+        sectionHistory.push(visible);
+        history.pushState({ finmindSection: visible }, '', window.location.pathname + window.location.search);
+      }
     }
 
-    function ensureExitGuard() {
-      if (history.state && history.state.finmindExitGuard) return;
+    function initHistory() {
       const url = window.location.pathname + window.location.search;
-      history.pushState({ finmindExitGuard: true }, '', url);
-    }
-
-    function handleBackNavigation() {
-      if (activeSection !== HOME_SECTION) {
-        switchSection(HOME_SECTION, { animate: true, direction: 'back' });
-        ensureExitGuard();
-        return;
-      }
-      const shouldExit = window.confirm(EXIT_CONFIRM_MESSAGE);
-      if (shouldExit) {
-        allowExit = true;
-        history.back();
-        return;
-      }
-      ensureExitGuard();
+      history.replaceState({ finmindGuard: true }, '', url);
+      history.pushState({ finmindSection: HOME_SECTION }, '', url);
     }
 
     function openTransactionModal(editIndex = null) {
@@ -2315,7 +2307,6 @@
     document.getElementById('transactionModal').addEventListener('click', (e) => { if (e.target.id === 'transactionModal') closeTransactionModal(); });
     document.getElementById('assetModal').addEventListener('click', (e) => { if (e.target.id === 'assetModal') closeAssetModal(); });
     document.getElementById('paywallModal').addEventListener('click', (e) => { if (e.target.id === 'paywallModal') closePaywall(); });
-    document.getElementById('stayFree')?.addEventListener('click', closePaywall);
     billingModal?.addEventListener('click', (e) => { if (e.target.id === 'billingModal') closeBillingModal(); });
     closeBilling?.addEventListener('click', closeBillingModal);
     upgradePlus?.addEventListener('click', () => { closePaywall(); openBillingModal('plus'); });
@@ -2337,10 +2328,38 @@
     profileModal?.addEventListener('click', (e) => { if (e.target.id === 'profileModal') closeProfileModal(); });
     document.querySelector('[data-close-profile]')?.addEventListener('click', closeProfileModal);
 
-    ensureExitGuard();
-    window.addEventListener('popstate', () => {
+    initHistory();
+    window.addEventListener('popstate', (event) => {
       if (allowExit) return;
-      handleBackNavigation();
+      const state = event.state || {};
+      if (state.finmindSection) {
+        const target = state.finmindSection;
+        if (target !== activeSection) {
+          const lastIndex = sectionHistory.lastIndexOf(target);
+          if (lastIndex >= 0) {
+            sectionHistory = sectionHistory.slice(0, lastIndex + 1);
+          } else {
+            sectionHistory = [HOME_SECTION, target];
+          }
+          switchSection(target, { animate: true, direction: 'back', pushHistory: false });
+        }
+        return;
+      }
+      if (state.finmindGuard) {
+        if (activeSection !== HOME_SECTION) {
+          sectionHistory = [HOME_SECTION];
+          switchSection(HOME_SECTION, { animate: true, direction: 'back', pushHistory: false });
+          history.pushState({ finmindSection: HOME_SECTION }, '', window.location.pathname + window.location.search);
+          return;
+        }
+        const shouldExit = window.confirm(EXIT_CONFIRM_MESSAGE);
+        if (shouldExit) {
+          allowExit = true;
+          history.back();
+          return;
+        }
+        history.pushState({ finmindSection: HOME_SECTION }, '', window.location.pathname + window.location.search);
+      }
     });
 
     navButtons.forEach(btn => btn.addEventListener('click', () => {
