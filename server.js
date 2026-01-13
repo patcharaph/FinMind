@@ -36,6 +36,12 @@ app.use(express.static(__dirname));
 app.get("/", (_req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
+app.get("/privacy", (_req, res) => {
+  res.sendFile(path.join(__dirname, "privacy.html"));
+});
+app.get("/privacy.html", (_req, res) => {
+  res.sendFile(path.join(__dirname, "privacy.html"));
+});
 
 // --- DB setup (optional) ---
 const useDb = !!process.env.DATABASE_URL && process.env.FINMIND_USE_DB !== "false";
