@@ -20,6 +20,12 @@ plugins {
     id 'com.android.application'
 }
 
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 def twaManifest = [
     applicationId: 'ai.finmind.app',
     hostName: 'finmind-awty.onrender.com', // The domain being opened in the TWA.
@@ -53,12 +59,27 @@ def twaManifest = [
 android {
     compileSdkVersion 36
     namespace "ai.finmind.app"
+    signingConfigs {
+        release {
+            def storeFilePath = keystoreProperties.getProperty("storeFile") ?: System.getenv("ANDROID_KEYSTORE_PATH")
+            def storePasswordValue = keystoreProperties.getProperty("storePassword") ?: System.getenv("ANDROID_KEYSTORE_PASSWORD")
+            def keyAliasValue = keystoreProperties.getProperty("keyAlias") ?: System.getenv("ANDROID_KEY_ALIAS")
+            def keyPasswordValue = keystoreProperties.getProperty("keyPassword") ?: System.getenv("ANDROID_KEY_PASSWORD")
+            if (!storeFilePath || !storePasswordValue || !keyAliasValue || !keyPasswordValue) {
+                throw new GradleException("Missing release signing config. Define in keystore.properties or ANDROID_KEYSTORE_* env vars.")
+            }
+            storeFile file(storeFilePath)
+            storePassword storePasswordValue
+            keyAlias keyAliasValue
+            keyPassword keyPasswordValue
+        }
+    }
     defaultConfig {
         applicationId "ai.finmind.app"
         minSdkVersion 21
         targetSdkVersion 35
-        versionCode 4
-        versionName "1.0.2"
+        versionCode 5
+        versionName "5.0.0"
 
         // The name for the application
         resValue "string", "appName", twaManifest.name
@@ -153,6 +174,7 @@ android {
     buildTypes {
         release {
             minifyEnabled true
+            signingConfig signingConfigs.release
         }
     }
     compileOptions {

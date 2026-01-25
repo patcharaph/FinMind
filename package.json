@@ -1,6 +1,6 @@
 {
   "name": "finmind-agentic-tracker",
-  "version": "1.0.0",
+  "version": "5.0.0",
   "description": "FinMind backend scaffold (Node/Express + Postgres) for Agentic Wealth Tracker",
   "main": "server.js",
   "type": "module",
