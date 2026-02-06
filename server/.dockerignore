@@ -1,0 +1,11 @@
+node_modules
+npm-debug.log*
+.env
+.env.*
+database.sqlite
+database.sqlite-wal
+database.sqlite-shm
+*.test.js
+test/
+Dockerfile
+.dockerignore
