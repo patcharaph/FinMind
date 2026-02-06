@@ -61,10 +61,16 @@ const DashboardPage = ({ onNavigate }) => {
                     <h1 className="text-3xl font-bold text-white mb-1">Financial Snapshot</h1>
                     <p className="text-finmind-muted text-sm uppercase tracking-wider">{current.market_date}</p>
                 </div>
-                <button onClick={() => onNavigate('input')}
-                    className="flex items-center space-x-1 text-finmind-muted hover:text-finmind-primary transition-colors px-3 py-2 rounded-lg hover:bg-slate-800">
-                    <span className="text-sm font-medium">← Back</span>
-                </button>
+                <div className="flex space-x-2">
+                    <button onClick={() => onNavigate('input')}
+                        className="px-4 py-2 bg-finmind-card border border-slate-700 rounded-lg text-sm hover:border-finmind-primary transition-colors">
+                        ← Back
+                    </button>
+                    <button onClick={() => onNavigate('advisor')}
+                        className="px-4 py-2 bg-finmind-secondary/10 border border-finmind-secondary/50 text-finmind-secondary rounded-lg text-sm hover:bg-finmind-secondary/20 transition-colors">
+                        ◉ AI Advice
+                    </button>
+                </div>
             </header>
 
             {/* Net Worth Card */}
