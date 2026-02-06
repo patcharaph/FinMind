@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import useStore from '../store/useStore';
-import { Wallet, TrendingUp, TrendingDown, CreditCard, BarChart3, Save, ShieldCheck } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, CreditCard, BarChart3, Save, ShieldCheck, ArrowLeft, Eraser } from 'lucide-react';
 
 const CurrencyInput = ({ label, icon: Icon, value, onChange }) => (
     <div className="bg-finmind-card rounded-2xl border border-slate-700/50 p-4">
@@ -41,6 +41,11 @@ const InputPage = ({ onNavigate }) => {
 
     const update = (field) => (value) => setForm((prev) => ({ ...prev, [field]: value }));
 
+    const handleClear = () => {
+        setForm({ cash: '', income: '', expenses: '', debt: '', investments: '' });
+        setSaved(false);
+    };
+
     const handleSubmit = async () => {
         setSaved(false);
         const result = await saveSnapshot(form);
@@ -52,9 +57,19 @@ const InputPage = ({ onNavigate }) => {
 
     return (
         <div className="space-y-4 animate-fade-in pb-24">
-            <div>
-                <h1 className="text-3xl font-bold text-white mb-2">Financial Data</h1>
-                <p className="text-finmind-muted text-sm">Enter your current financial position. All data stays private.</p>
+            {/* Header with Back button */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold text-white mb-1">Financial Data</h1>
+                    <p className="text-finmind-muted text-sm">Enter your current financial position. All data stays private.</p>
+                </div>
+                <button
+                    onClick={() => onNavigate('dashboard')}
+                    className="flex items-center space-x-1 text-finmind-muted hover:text-finmind-primary transition-colors px-3 py-2 rounded-lg hover:bg-slate-800"
+                >
+                    <ArrowLeft size={18} />
+                    <span className="text-sm font-medium">Back</span>
+                </button>
             </div>
 
             {/* Privacy Badge */}
@@ -70,14 +85,22 @@ const InputPage = ({ onNavigate }) => {
             <CurrencyInput label="Total Outstanding Debt" icon={CreditCard} value={form.debt} onChange={update('debt')} />
             <CurrencyInput label="Investment Portfolio" icon={BarChart3} value={form.investments} onChange={update('investments')} />
 
-            {/* Submit */}
-            <button
-                onClick={handleSubmit}
-                disabled={loading}
-                className="w-full flex items-center justify-center bg-finmind-primary text-slate-900 font-bold rounded-xl px-8 py-4 text-lg hover:shadow-[0_0_20px_rgba(0,243,255,0.4)] transition-all disabled:opacity-50"
-            >
-                {loading ? 'Saving...' : saved ? '✓ Saved!' : <><Save className="mr-2" size={20} /> Save Snapshot</>}
-            </button>
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+                <button
+                    onClick={handleClear}
+                    className="flex-1 flex items-center justify-center bg-slate-800 text-finmind-muted font-semibold rounded-xl px-6 py-4 text-base border border-slate-700 hover:border-finmind-danger hover:text-finmind-danger transition-all"
+                >
+                    <Eraser className="mr-2" size={18} /> Clear
+                </button>
+                <button
+                    onClick={handleSubmit}
+                    disabled={loading}
+                    className="flex-[2] flex items-center justify-center bg-finmind-primary text-slate-900 font-bold rounded-xl px-8 py-4 text-lg hover:shadow-[0_0_20px_rgba(0,243,255,0.4)] transition-all disabled:opacity-50"
+                >
+                    {loading ? 'Saving...' : saved ? '✓ Saved!' : <><Save className="mr-2" size={20} /> Save Snapshot</>}
+                </button>
+            </div>
         </div>
     );
 };
