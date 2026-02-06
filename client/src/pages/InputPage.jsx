@@ -57,19 +57,9 @@ const InputPage = ({ onNavigate }) => {
 
     return (
         <div className="space-y-4 animate-fade-in pb-24">
-            {/* Header with Back button */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold text-white mb-1">Financial Data</h1>
-                    <p className="text-finmind-muted text-sm">Enter your current financial position. All data stays private.</p>
-                </div>
-                <button
-                    onClick={() => onNavigate('dashboard')}
-                    className="flex items-center space-x-1 text-finmind-muted hover:text-finmind-primary transition-colors px-3 py-2 rounded-lg hover:bg-slate-800"
-                >
-                    <ArrowLeft size={18} />
-                    <span className="text-sm font-medium">Back</span>
-                </button>
+            <div>
+                <h1 className="text-3xl font-bold text-white mb-2">Financial Data</h1>
+                <p className="text-finmind-muted text-sm">Enter your current financial position. All data stays private.</p>
             </div>
 
             {/* Privacy Badge */}
