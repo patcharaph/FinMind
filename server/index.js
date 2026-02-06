@@ -103,7 +103,9 @@ const buildUserPrompt = (snapshot, metrics) => {
 - Monthly Income: $${snapshot.income}
 - Monthly Expenses: $${snapshot.expenses}
 - Total Debt: $${snapshot.debt}
+- Avg Debt Interest Rate: ${snapshot.debt_interest_rate || 0}%
 - Investment Portfolio: $${snapshot.investments}
+- Investment Risk Level: ${snapshot.risk_level || 'moderate'}
 - Snapshot Period: ${snapshot.market_date}
 
 COMPUTED METRICS:

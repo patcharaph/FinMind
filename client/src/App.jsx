@@ -18,7 +18,7 @@ function App() {
     <Layout currentTab={currentTab} onTabChange={setCurrentTab}>
       {currentTab === 'dashboard' && <DashboardPage onNavigate={setCurrentTab} />}
       {currentTab === 'input' && <InputPage onNavigate={setCurrentTab} />}
-      {currentTab === 'advisor' && <AdvisorPage />}
+      {currentTab === 'advisor' && <AdvisorPage onNavigate={setCurrentTab} />}
       {currentTab === 'history' && <HistoryPage />}
     </Layout>
   );
