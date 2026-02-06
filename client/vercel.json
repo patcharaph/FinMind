@@ -2,6 +2,11 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
+  "build": {
+    "env": {
+      "VITE_API_URL": "https://finmind-api-1077191555496.asia-southeast1.run.app/api"
+    }
+  },
   "rewrites": [
     { "source": "/((?!assets|api|icon|favicon|apple|splash|manifest|sw|workbox|.well-known).*)", "destination": "/index.html" }
   ],
