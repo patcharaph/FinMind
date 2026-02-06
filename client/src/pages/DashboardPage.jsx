@@ -151,6 +151,22 @@ const DashboardPage = ({ onNavigate }) => {
                     {runwayLabel} — {m.runwayMonths >= 6 ? 'exceeds' : m.runwayMonths >= 3 ? 'meets' : 'below'} 3-6 month benchmark
                 </div>
             </div>
+
+            {/* Bottom Actions */}
+            <div className="flex gap-3 pt-2">
+                <button
+                    onClick={() => onNavigate('input')}
+                    className="flex-1 flex items-center justify-center bg-finmind-card border border-slate-700 rounded-xl px-6 py-4 text-base font-semibold text-finmind-text hover:border-finmind-primary hover:text-finmind-primary transition-all"
+                >
+                    ✎ Edit Data
+                </button>
+                <button
+                    onClick={() => onNavigate('advisor')}
+                    className="flex-1 flex items-center justify-center bg-finmind-secondary/10 border border-finmind-secondary/50 text-finmind-secondary rounded-xl px-6 py-4 text-base font-semibold hover:bg-finmind-secondary/20 transition-all"
+                >
+                    ◉ Get AI Advice
+                </button>
+            </div>
         </div>
     );
 };
