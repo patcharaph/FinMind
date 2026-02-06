@@ -1,10 +1,32 @@
-node_modules
-.DS_Store
+# Dependencies
+node_modules/
+
+# Environment variables (NEVER commit API keys)
 .env
-.env.*
+.env.local
+.env.*.local
+
+# Build output
+dist/
+dist-ssr/
+
+# SQLite database
+*.sqlite
+
+# Logs
 *.log
-coverage
-client/dist
-server/database.sqlite
-server/database.sqlite-wal
-server/database.sqlite-shm
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.sw?
+
+# TWA / Android signing
+*.keystore
+*.jks
+android/

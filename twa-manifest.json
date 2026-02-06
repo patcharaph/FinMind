@@ -1,0 +1,52 @@
+{
+  "packageId": "com.finmind.twa",
+  "host": "finmind.app",
+  "name": "FinMind — AI Finance Copilot",
+  "launcherName": "FinMind",
+  "display": "standalone",
+  "themeColor": "#0f172a",
+  "themeColorDark": "#0f172a",
+  "navigationColor": "#0f172a",
+  "navigationColorDark": "#0f172a",
+  "navigationDividerColor": "#0f172a",
+  "navigationDividerColorDark": "#0f172a",
+  "backgroundColor": "#0f172a",
+  "enableNotifications": false,
+  "startUrl": "/",
+  "iconUrl": "https://finmind.app/icon-512x512.png",
+  "maskableIconUrl": "https://finmind.app/icon-maskable-512x512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "finmind"
+  },
+  "appVersionCode": 1,
+  "appVersionName": "1.0.0",
+  "shortcuts": [
+    {
+      "name": "Add Snapshot",
+      "shortName": "Input",
+      "url": "/?tab=input",
+      "chosenIconUrl": "https://finmind.app/icon-96x96.png"
+    },
+    {
+      "name": "AI Advisor",
+      "shortName": "Advisor",
+      "url": "/?tab=advisor",
+      "chosenIconUrl": "https://finmind.app/icon-96x96.png"
+    }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://finmind.app/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://finmind.app/",
+  "minSdkVersion": 19,
+  "orientation": "portrait"
+}

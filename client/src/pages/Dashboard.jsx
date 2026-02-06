@@ -1,90 +1,80 @@
-import { useEffect, useState } from "react";
-import { TrendingUp, Wallet, Flame, ShieldCheck } from "lucide-react";
-import MetricCard from "../components/MetricCard";
-import { useSnapshotStore } from "../store/useSnapshotStore";
-import { formatCurrency } from "../utils/format";
-import { fetchLatestSnapshot } from "../api/finmind";
+import React from 'react';
+import useStore from '../store/useStore';
+import { Shield, AlertTriangle, CheckCircle, RefreshCcw } from 'lucide-react';
 
-export default function Dashboard() {
-  const { snapshot, setSnapshot } = useSnapshotStore();
-  const [status, setStatus] = useState("idle");
+const Dashboard = () => {
+    const { financials, advice, isLoading } = useStore();
 
-  useEffect(() => {
-    const load = async () => {
-      setStatus("loading");
-      try {
-        const data = await fetchLatestSnapshot();
-        if (data?.latest) {
-          setSnapshot(data.latest);
+    const netWorth = (parseFloat(financials.cash) + parseFloat(financials.investment)) - parseFloat(financials.debt);
+
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'Healthy': return 'text-finmind-success';
+            case 'At Risk': return 'text-finmind-warning';
+            case 'Critical': return 'text-finmind-danger';
+            default: return 'text-gray-400';
         }
-        setStatus("ready");
-      } catch (error) {
-        console.error(error);
-        setStatus("error");
-      }
     };
-    load();
-  }, [setSnapshot]);
 
-  const netWorth = snapshot.cash + snapshot.investment - snapshot.debt;
-  const runway = snapshot.expense > 0 ? snapshot.cash / snapshot.expense : 0;
-  const savingsRate = snapshot.income > 0 ? ((snapshot.income - snapshot.expense) / snapshot.income) * 100 : 0;
+    const StatusIcon = {
+        'Healthy': CheckCircle,
+        'At Risk': AlertTriangle,
+        'Critical': Shield, // Or skull?
+        'Unknown': RefreshCcw
+    }[advice.status] || RefreshCcw;
 
-  return (
-    <section className="fade-in">
-      <header className="flex items-center justify-between">
-        <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-haze/70">Financial source of truth</p>
-          <h1 className="mt-2 text-2xl font-display">Snapshot</h1>
-        </div>
-        <span className="text-xs text-haze/70">{status === "loading" ? "Syncing" : "Live"}</span>
-      </header>
+    return (
+        <div className="min-h-screen p-4 pb-20 fade-in">
+            {/* Header */}
+            <header className="flex justify-between items-center mb-6">
+                <h1 className="text-xl font-bold">Your Snapshot</h1>
+                <div className={`text-sm font-bold ${getStatusColor(advice.status)} flex items-center gap-1`}>
+                    <StatusIcon size={16} />
+                    {advice.status}
+                </div>
+            </header>
 
-      <div className="mt-6 grid gap-4">
-        <MetricCard
-          label="Net worth"
-          value={formatCurrency(netWorth)}
-          tone={netWorth >= 0 ? "positive" : "negative"}
-          subtitle="Cash + Investments - Debt"
-        />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <MetricCard
-            label="Liquidity"
-            value={`${runway.toFixed(1)} months`}
-            tone="info"
-            subtitle="Cash runway vs. monthly expense"
-          />
-          <MetricCard
-            label="Savings rate"
-            value={`${Math.max(0, savingsRate).toFixed(0)}%`}
-            tone={savingsRate >= 20 ? "positive" : "default"}
-            subtitle="Income minus expense"
-          />
-        </div>
-      </div>
-
-      <div className="mt-6 grid gap-3">
-        <div className="glass-panel flex items-center justify-between rounded-2xl px-4 py-3">
-          <div className="flex items-center gap-3">
-            <Wallet className="text-aqua" size={20} />
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-haze/60">Cash</p>
-              <p className="font-display text-lg">{formatCurrency(snapshot.cash)}</p>
+            {/* Net Worth Card */}
+            <div className="card mb-6 bg-gradient-to-br from-finmind-card to-slate-800">
+                <p className="text-gray-400 text-sm mb-1">Net Worth</p>
+                <div className="text-4xl font-bold text-white">
+                    ${netWorth.toLocaleString()}
+                </div>
             </div>
-          </div>
-          <TrendingUp className="text-lime" size={18} />
-        </div>
-        <div className="glass-panel flex items-center justify-between rounded-2xl px-4 py-3">
-          <div className="flex items-center gap-3">
-            <Flame className="text-ember" size={20} />
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-haze/60">Debt</p>
-              <p className="font-display text-lg">{formatCurrency(snapshot.debt)}</p>
+
+            {/* AI Insight */}
+            <div className="card mb-6 border-l-4 border-finmind-accent">
+                <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
+                    <span className="text-2xl">🤖</span> Advisor Insight
+                </h2>
+                {isLoading ? (
+                    <div className="animate-pulse flex space-x-4">
+                        <div className="h-4 bg-gray-700 rounded w-3/4"></div>
+                    </div>
+                ) : (
+                    <p className="text-gray-300 italic">"{advice.insight}"</p>
+                )}
             </div>
-          </div>
-          <ShieldCheck className="text-haze/60" size={18} />
+
+            {/* Action Plan */}
+            <div className="card">
+                <h2 className="text-lg font-semibold mb-4 text-finmind-success">Recommended Action</h2>
+                {isLoading ? (
+                    <div className="animate-pulse h-10 bg-gray-700 rounded"></div>
+                ) : (
+                    <div className="bg-green-900/20 p-4 rounded-lg border border-green-900/50">
+                        <p className="text-green-100 font-medium">{advice.action}</p>
+                    </div>
+                )}
+            </div>
+
+            {/* Navigation (Simple) */}
+            <nav className="fixed bottom-0 left-0 w-full bg-finmind-card border-t border-gray-800 p-4 flex justify-around">
+                <button className="text-finmind-accent font-medium">Dashboard</button>
+                <button className="text-gray-500" onClick={() => window.location.reload()}>Reset</button>
+            </nav>
         </div>
-      </div>
-    </section>
-  );
-}
+    );
+};
+
+export default Dashboard;

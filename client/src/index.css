@@ -1,46 +1,40 @@
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap");
+@import "tailwindcss";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@theme {
+  --color-finmind-background: #0f172a;
+  --color-finmind-card: #1e293b;
+  --color-finmind-primary: #00f3ff;
+  --color-finmind-secondary: #ff00ff;
+  --color-finmind-success: #10b981;
+  --color-finmind-warning: #f59e0b;
+  --color-finmind-danger: #ef4444;
+  --color-finmind-text: #e2e8f0;
+  --color-finmind-muted: #94a3b8;
 
-:root {
-  color-scheme: dark;
+  --font-sans: 'Inter', sans-serif;
 }
 
-body {
-  font-family: "Inter", "Segoe UI", sans-serif;
-}
-
-.app-shell {
-  min-height: 100vh;
-  background: radial-gradient(circle at 20% 20%, rgba(106, 228, 255, 0.2), transparent 55%),
-    radial-gradient(circle at 80% 10%, rgba(255, 211, 106, 0.18), transparent 45%),
-    linear-gradient(160deg, #0b0d13 0%, #101018 55%, #0f101a 100%);
-}
-
-.glass-panel {
-  background: rgba(15, 18, 30, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(18px);
-}
-
-.bottom-nav {
-  background: rgba(10, 12, 20, 0.9);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.fade-in {
-  animation: fade-in 0.6s ease forwards;
-}
-
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
+@layer base {
+  body {
+    @apply bg-finmind-background text-finmind-text font-sans antialiased;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
   }
+  .animate-fade-in-up {
+    animation: fadeInUp 0.4s ease-out;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
