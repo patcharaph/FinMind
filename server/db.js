@@ -24,8 +24,10 @@ const initDb = () => {
             cash REAL DEFAULT 0,
             investments REAL DEFAULT 0,
             debt REAL DEFAULT 0,
+            debt_interest_rate REAL DEFAULT 0,
             income REAL DEFAULT 0,
             expenses REAL DEFAULT 0,
+            risk_level TEXT DEFAULT 'moderate',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             UNIQUE(user_id, market_date),
             FOREIGN KEY(user_id) REFERENCES users(id)
@@ -50,6 +52,17 @@ const initDb = () => {
             FOREIGN KEY(snapshot_id) REFERENCES snapshots(id)
         );
     `);
+
+    // Migrate: add new columns if they don't exist
+    const cols = db.prepare("PRAGMA table_info(snapshots)").all().map(c => c.name);
+    if (!cols.includes('debt_interest_rate')) {
+        db.exec("ALTER TABLE snapshots ADD COLUMN debt_interest_rate REAL DEFAULT 0");
+        console.log('[db] Added debt_interest_rate column.');
+    }
+    if (!cols.includes('risk_level')) {
+        db.exec("ALTER TABLE snapshots ADD COLUMN risk_level TEXT DEFAULT 'moderate'");
+        console.log('[db] Added risk_level column.');
+    }
 
     // Ensure default user exists
     const user = db.prepare('SELECT id FROM users WHERE id = 1').get();
@@ -90,21 +103,24 @@ const computeMetrics = (snap) => {
 // --- Snapshot CRUD ---
 
 const upsertSnapshot = (data) => {
-    const { user_id, market_date, cash, investments, debt, income, expenses } = data;
+    const { user_id, market_date, cash, investments, debt, debt_interest_rate, income, expenses, risk_level } = data;
     const stmt = db.prepare(`
-        INSERT INTO snapshots (user_id, market_date, cash, investments, debt, income, expenses)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO snapshots (user_id, market_date, cash, investments, debt, debt_interest_rate, income, expenses, risk_level)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(user_id, market_date) DO UPDATE SET
             cash = excluded.cash,
             investments = excluded.investments,
             debt = excluded.debt,
+            debt_interest_rate = excluded.debt_interest_rate,
             income = excluded.income,
             expenses = excluded.expenses,
+            risk_level = excluded.risk_level,
             created_at = CURRENT_TIMESTAMP
     `);
     const info = stmt.run(user_id, market_date,
         Number(cash) || 0, Number(investments) || 0, Number(debt) || 0,
-        Number(income) || 0, Number(expenses) || 0
+        Number(debt_interest_rate) || 0, Number(income) || 0, Number(expenses) || 0,
+        risk_level || 'moderate'
     );
     // Return the row (could be insert or update)
     return db.prepare('SELECT * FROM snapshots WHERE user_id = ? AND market_date = ?').get(user_id, market_date);

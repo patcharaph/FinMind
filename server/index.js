@@ -59,7 +59,7 @@ app.get('/api/snapshots', (req, res) => {
 // POST /api/snapshots (upsert — one snapshot per month)
 app.post('/api/snapshots', (req, res) => {
     try {
-        const { user_id, market_date, cash, investments, debt, income, expenses } = req.body;
+        const { user_id, market_date, cash, investments, debt, debt_interest_rate, income, expenses, risk_level } = req.body;
 
         if (!market_date) {
             return res.status(400).json({ error: 'market_date is required (YYYY-MM)' });
@@ -67,7 +67,7 @@ app.post('/api/snapshots', (req, res) => {
 
         const userId = Number(user_id) || 1;
         const snapshot = db.upsertSnapshot({
-            user_id: userId, market_date, cash, investments, debt, income, expenses
+            user_id: userId, market_date, cash, investments, debt, debt_interest_rate, income, expenses, risk_level
         });
         const metrics = db.computeMetrics(snapshot);
 

@@ -34,7 +34,7 @@ const useStore = create((set, get) => ({
         }
     },
 
-    saveSnapshot: async ({ cash, investments, debt, income, expenses }) => {
+    saveSnapshot: async ({ cash, investments, debt, debt_interest_rate, income, expenses, risk_level }) => {
         set({ loading: true, error: null });
         try {
             const market_date = new Date().toISOString().slice(0, 7); // YYYY-MM
@@ -47,8 +47,10 @@ const useStore = create((set, get) => ({
                     cash: Number(cash) || 0,
                     investments: Number(investments) || 0,
                     debt: Number(debt) || 0,
+                    debt_interest_rate: Number(debt_interest_rate) || 0,
                     income: Number(income) || 0,
                     expenses: Number(expenses) || 0,
+                    risk_level: risk_level || 'moderate',
                 }),
             });
             const data = await res.json();
