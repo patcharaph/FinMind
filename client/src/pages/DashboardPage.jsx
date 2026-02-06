@@ -1,6 +1,6 @@
 import React from 'react';
 import useStore from '../store/useStore';
-import { Wallet, ArrowUpDown, TrendingUp, TrendingDown, BarChart3, Shield, ShieldCheck, Zap, Brain, ArrowRight, Sparkles } from 'lucide-react';
+import { Wallet, ArrowUpDown, TrendingUp, TrendingDown, BarChart3, Shield, ShieldCheck, Zap, Brain, ArrowRight, Sparkles, LineChart, Lock, Clock } from 'lucide-react';
 
 const fmt = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
 const fmtK = (val) => {
@@ -29,52 +29,83 @@ const DashboardPage = ({ onNavigate }) => {
     if (!current) {
         return (
             <div className="flex flex-col items-center text-center animate-fade-in pb-24 -mt-2">
-                {/* Hero */}
-                <div className="relative w-full flex flex-col items-center pt-10 pb-8">
-                    <div className="absolute inset-0 bg-gradient-to-b from-finmind-primary/5 via-transparent to-transparent rounded-3xl" />
+                {/* Logo */}
+                <div className="relative w-full flex flex-col items-center pt-6 pb-6">
+                    <div className="absolute inset-0 bg-gradient-to-b from-finmind-primary/8 via-finmind-secondary/3 to-transparent rounded-3xl" />
                     <div className="relative z-10 flex flex-col items-center">
-                        <div className="w-20 h-20 bg-gradient-to-br from-finmind-primary/20 to-finmind-secondary/20 rounded-2xl flex items-center justify-center mb-6 shadow-[0_0_40px_rgba(0,243,255,0.15)]">
-                            <Sparkles size={36} className="text-finmind-primary" />
+                        {/* SVG Logo */}
+                        <div className="w-24 h-24 mb-5 relative">
+                            <div className="absolute inset-0 bg-gradient-to-br from-finmind-primary/30 to-finmind-secondary/30 rounded-3xl blur-xl" />
+                            <div className="relative w-full h-full bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl border border-slate-700/50 flex items-center justify-center shadow-[0_0_50px_rgba(0,243,255,0.12)]">
+                                <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                                    <path d="M24 4L28 16H40L30 24L34 36L24 28L14 36L18 24L8 16H20L24 4Z" fill="url(#logoGrad)" />
+                                    <path d="M24 12L26.5 20H34L28 25L30.5 33L24 28L17.5 33L20 25L14 20H21.5L24 12Z" fill="#0f172a" fillOpacity="0.5" />
+                                    <defs>
+                                        <linearGradient id="logoGrad" x1="8" y1="4" x2="40" y2="36" gradientUnits="userSpaceOnUse">
+                                            <stop stopColor="#00f3ff" />
+                                            <stop offset="1" stopColor="#ff3b9a" />
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                            </div>
                         </div>
-                        <h1 className="text-4xl font-extrabold tracking-tight mb-2">
-                            <span className="text-finmind-primary">Fin</span><span className="text-white">Mind</span>
+
+                        <h1 className="text-5xl font-black tracking-tight mb-3">
+                            <span className="bg-gradient-to-r from-finmind-primary to-cyan-300 bg-clip-text text-transparent">Fin</span><span className="text-white">Mind</span>
                         </h1>
-                        <p className="text-finmind-muted text-base max-w-xs leading-relaxed">
-                            Your AI financial mirror.<br />
-                            See your position. Understand risk. Act.
+                        <p className="text-finmind-muted text-base max-w-[280px] leading-relaxed">
+                            Your AI wealth architect.<br />
+                            <span className="text-slate-400">Know your numbers. Master your money.</span>
                         </p>
                     </div>
                 </div>
 
-                {/* Feature Cards */}
-                <div className="w-full space-y-3 mt-4">
-                    <div className="bg-finmind-card/60 backdrop-blur border border-slate-700/40 rounded-2xl p-5 flex items-center space-x-4">
-                        <div className="w-12 h-12 rounded-xl bg-finmind-primary/10 flex items-center justify-center flex-shrink-0">
-                            <ShieldCheck size={22} className="text-finmind-primary" />
+                {/* Feature Cards — 2 column grid + full-width cards */}
+                <div className="w-full mt-5 space-y-3">
+                    {/* Row 1: 2 columns */}
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-finmind-card/60 backdrop-blur border border-slate-700/40 rounded-2xl p-4 text-left">
+                            <div className="w-10 h-10 rounded-xl bg-finmind-primary/10 flex items-center justify-center mb-3">
+                                <Lock size={18} className="text-finmind-primary" />
+                            </div>
+                            <h3 className="text-white font-semibold text-sm mb-1">100% Private</h3>
+                            <p className="text-finmind-muted text-[11px] leading-relaxed">No login · No email · No tracking · Your data stays on device</p>
                         </div>
-                        <div className="text-left">
-                            <h3 className="text-white font-semibold text-sm">No login required</h3>
-                            <p className="text-finmind-muted text-xs">Device-bound identity · No email · No tracking</p>
-                        </div>
-                    </div>
-
-                    <div className="bg-finmind-card/60 backdrop-blur border border-slate-700/40 rounded-2xl p-5 flex items-center space-x-4">
-                        <div className="w-12 h-12 rounded-xl bg-finmind-success/10 flex items-center justify-center flex-shrink-0">
-                            <Zap size={22} className="text-finmind-success" />
-                        </div>
-                        <div className="text-left">
-                            <h3 className="text-white font-semibold text-sm">30-second clarity</h3>
-                            <p className="text-finmind-muted text-xs">Instant financial snapshot with key metrics</p>
+                        <div className="bg-finmind-card/60 backdrop-blur border border-slate-700/40 rounded-2xl p-4 text-left">
+                            <div className="w-10 h-10 rounded-xl bg-finmind-success/10 flex items-center justify-center mb-3">
+                                <Zap size={18} className="text-finmind-success" />
+                            </div>
+                            <h3 className="text-white font-semibold text-sm mb-1">30-Second Setup</h3>
+                            <p className="text-finmind-muted text-[11px] leading-relaxed">Enter 5 numbers and get a complete financial snapshot instantly</p>
                         </div>
                     </div>
 
-                    <div className="bg-finmind-card/60 backdrop-blur border border-slate-700/40 rounded-2xl p-5 flex items-center space-x-4">
-                        <div className="w-12 h-12 rounded-xl bg-finmind-secondary/10 flex items-center justify-center flex-shrink-0">
-                            <Brain size={22} className="text-finmind-secondary" />
+                    {/* Row 2: 2 columns */}
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-finmind-card/60 backdrop-blur border border-slate-700/40 rounded-2xl p-4 text-left">
+                            <div className="w-10 h-10 rounded-xl bg-finmind-secondary/10 flex items-center justify-center mb-3">
+                                <Brain size={18} className="text-finmind-secondary" />
+                            </div>
+                            <h3 className="text-white font-semibold text-sm mb-1">AI Advisor</h3>
+                            <p className="text-finmind-muted text-[11px] leading-relaxed">MBA-level insights powered by AI — specific to your situation</p>
+                        </div>
+                        <div className="bg-finmind-card/60 backdrop-blur border border-slate-700/40 rounded-2xl p-4 text-left">
+                            <div className="w-10 h-10 rounded-xl bg-finmind-warning/10 flex items-center justify-center mb-3">
+                                <LineChart size={18} className="text-finmind-warning" />
+                            </div>
+                            <h3 className="text-white font-semibold text-sm mb-1">Track Progress</h3>
+                            <p className="text-finmind-muted text-[11px] leading-relaxed">Monthly snapshots with charts to visualize your wealth journey</p>
+                        </div>
+                    </div>
+
+                    {/* Row 3: Full-width highlight */}
+                    <div className="bg-gradient-to-r from-finmind-primary/5 to-finmind-secondary/5 backdrop-blur border border-slate-700/40 rounded-2xl p-5 flex items-center space-x-4">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-finmind-primary/20 to-finmind-secondary/20 flex items-center justify-center flex-shrink-0">
+                            <Shield size={22} className="text-finmind-primary" />
                         </div>
                         <div className="text-left">
-                            <h3 className="text-white font-semibold text-sm">AI-powered advice</h3>
-                            <p className="text-finmind-muted text-xs">MBA-level actionable insights from your data</p>
+                            <h3 className="text-white font-semibold text-sm">Risk Assessment Built-In</h3>
+                            <p className="text-finmind-muted text-xs">Emergency runway · Debt-to-asset ratio · Savings rate · Investment exposure</p>
                         </div>
                     </div>
                 </div>
@@ -82,13 +113,13 @@ const DashboardPage = ({ onNavigate }) => {
                 {/* CTA */}
                 <button
                     onClick={() => onNavigate('input')}
-                    className="w-full mt-8 flex items-center justify-center bg-gradient-to-r from-finmind-primary to-finmind-secondary text-slate-900 font-bold rounded-2xl px-8 py-4 text-lg shadow-[0_0_30px_rgba(0,243,255,0.25)] hover:shadow-[0_0_40px_rgba(0,243,255,0.4)] transition-all active:scale-[0.98]"
+                    className="w-full mt-7 flex items-center justify-center bg-gradient-to-r from-finmind-primary via-cyan-400 to-finmind-secondary text-slate-900 font-bold rounded-2xl px-8 py-4 text-lg shadow-[0_0_30px_rgba(0,243,255,0.25)] hover:shadow-[0_0_50px_rgba(0,243,255,0.4)] transition-all active:scale-[0.98]"
                 >
                     Get Started <ArrowRight className="ml-2" size={20} />
                 </button>
 
-                <p className="text-finmind-muted text-xs mt-4 opacity-60">
-                    Free · Private · No credit card needed
+                <p className="text-finmind-muted text-xs mt-4 opacity-50">
+                    Free forever · No credit card · Works offline
                 </p>
             </div>
         );
