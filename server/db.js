@@ -53,6 +53,17 @@ const initDb = () => {
         );
     `);
 
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS ai_usage (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            usage_date TEXT NOT NULL,
+            request_count INTEGER DEFAULT 0,
+            UNIQUE(user_id, usage_date),
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        );
+    `);
+
     // Migrate: add new columns if they don't exist
     const cols = db.prepare("PRAGMA table_info(snapshots)").all().map(c => c.name);
     if (!cols.includes('debt_interest_rate')) {
@@ -170,6 +181,34 @@ const getAdviceForSnapshot = (snapshot_id) => {
     return row;
 };
 
+// --- AI Usage Tracking (Beta limits) ---
+
+const AI_DAILY_LIMIT = 3;
+
+const getAiUsageToday = (user_id) => {
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const row = db.prepare('SELECT request_count FROM ai_usage WHERE user_id = ? AND usage_date = ?').get(user_id, today);
+    return row ? row.request_count : 0;
+};
+
+const incrementAiUsage = (user_id) => {
+    const today = new Date().toISOString().slice(0, 10);
+    db.prepare(`
+        INSERT INTO ai_usage (user_id, usage_date, request_count)
+        VALUES (?, ?, 1)
+        ON CONFLICT(user_id, usage_date) DO UPDATE SET request_count = request_count + 1
+    `).run(user_id, today);
+};
+
+const canUseAi = (user_id) => {
+    return getAiUsageToday(user_id) < AI_DAILY_LIMIT;
+};
+
+const getAiUsageInfo = (user_id) => {
+    const used = getAiUsageToday(user_id);
+    return { used, limit: AI_DAILY_LIMIT, remaining: Math.max(0, AI_DAILY_LIMIT - used) };
+};
+
 module.exports = {
     db,
     initDb,
@@ -180,4 +219,9 @@ module.exports = {
     getSnapshotById,
     saveAdvice,
     getAdviceForSnapshot,
+    getAiUsageToday,
+    incrementAiUsage,
+    canUseAi,
+    getAiUsageInfo,
+    AI_DAILY_LIMIT,
 };

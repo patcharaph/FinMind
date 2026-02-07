@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 const db = require('./db');
 const OpenAI = require('openai');
 
@@ -18,6 +19,16 @@ app.use(cors({
     }
 }));
 app.use(express.json());
+
+// Rate Limiting: 100 requests per 15 minutes per IP
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many requests. Please try again in 15 minutes.' },
+});
+app.use('/api/', apiLimiter);
 
 // Initialize Database
 db.initDb();
@@ -128,6 +139,13 @@ OUTPUT FORMAT (strict JSON):
 }`;
 };
 
+// GET /api/advisor/usage - Check AI usage for today
+app.get('/api/advisor/usage', (req, res) => {
+    const userId = Number(req.query.user_id) || 1;
+    const usage = db.getAiUsageInfo(userId);
+    res.json(usage);
+});
+
 // POST /api/advisor/generate
 app.post('/api/advisor/generate', async (req, res) => {
     const { snapshot_id, user_id, force } = req.body;
@@ -138,10 +156,11 @@ app.post('/api/advisor/generate', async (req, res) => {
     }
 
     try {
-        // 1. Return cached advice unless force refresh
+        // 1. Return cached advice unless force refresh (cached doesn't count against limit)
         if (!force) {
             const cached = db.getAdviceForSnapshot(snapshot_id);
             if (cached) {
+                const usage = db.getAiUsageInfo(userId);
                 return res.json({
                     financial_status: cached.financial_status,
                     risk_level: cached.risk_level,
@@ -150,11 +169,21 @@ app.post('/api/advisor/generate', async (req, res) => {
                     key_insights: cached.key_insights,
                     actionable_steps: cached.actionable_steps,
                     cached: true,
+                    usage,
                 });
             }
         }
 
-        // 2. Fetch snapshot
+        // 2. Check daily AI limit (only for new/forced requests)
+        if (!db.canUseAi(userId)) {
+            const usage = db.getAiUsageInfo(userId);
+            return res.status(429).json({
+                error: `Daily AI limit reached (${usage.limit} requests/day). Try again tomorrow.`,
+                usage,
+            });
+        }
+
+        // 3. Fetch snapshot
         const snapshot = db.getSnapshotById(snapshot_id, userId);
         if (!snapshot) {
             return res.status(404).json({ error: 'Snapshot not found' });
@@ -162,7 +191,7 @@ app.post('/api/advisor/generate', async (req, res) => {
 
         const metrics = db.computeMetrics(snapshot);
 
-        // 3. Call AI
+        // 4. Call AI
         const completion = await openai.chat.completions.create({
             model: ADVISOR_MODEL,
             messages: [
@@ -176,7 +205,10 @@ app.post('/api/advisor/generate', async (req, res) => {
 
         const content = completion.choices[0].message.content;
 
-        // 4. Parse response
+        // 5. Increment usage counter (only after successful AI call)
+        db.incrementAiUsage(userId);
+
+        // 6. Parse response
         let advice;
         try {
             advice = JSON.parse(content);
@@ -185,7 +217,7 @@ app.post('/api/advisor/generate', async (req, res) => {
             return res.status(500).json({ error: 'AI response malformed', raw: content });
         }
 
-        // 5. Normalize & validate fields
+        // 7. Normalize & validate fields
         const result = {
             financial_status: advice.financial_status || 'Stable',
             risk_level: advice.risk_level || 'Moderate',
@@ -195,7 +227,7 @@ app.post('/api/advisor/generate', async (req, res) => {
             actionable_steps: Array.isArray(advice.actionable_steps) ? advice.actionable_steps.slice(0, 3) : [],
         };
 
-        // 6. Save to DB
+        // 8. Save to DB
         db.saveAdvice({
             user_id: userId,
             snapshot_id,
@@ -204,8 +236,9 @@ app.post('/api/advisor/generate', async (req, res) => {
             model_used: ADVISOR_MODEL,
         });
 
-        // 7. Return
-        res.json(result);
+        // 9. Return with usage info
+        const usage = db.getAiUsageInfo(userId);
+        res.json({ ...result, usage });
 
     } catch (err) {
         console.error('[advisor]', err);
