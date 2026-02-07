@@ -2,6 +2,28 @@ import { create } from 'zustand';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
+// Generate or retrieve device_id for user identification
+const getDeviceId = () => {
+    const STORAGE_KEY = 'finmind_device_id';
+    let deviceId = localStorage.getItem(STORAGE_KEY);
+    if (!deviceId) {
+        // Generate a unique device ID (UUID v4 format)
+        deviceId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+            const r = Math.random() * 16 | 0;
+            const v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+        localStorage.setItem(STORAGE_KEY, deviceId);
+    }
+    return deviceId;
+};
+
+// Common headers for all API requests
+const getHeaders = () => ({
+    'Content-Type': 'application/json',
+    'X-Device-ID': getDeviceId(),
+});
+
 const useStore = create((set, get) => ({
     // --- State ---
     snapshots: [],
@@ -11,6 +33,7 @@ const useStore = create((set, get) => ({
     error: null,
     limitReached: false,
     usage: null,
+    deviceId: getDeviceId(),
 
     // --- Derived (computed from snapshots) ---
     get currentSnapshot() {
@@ -25,7 +48,9 @@ const useStore = create((set, get) => ({
     fetchSnapshots: async () => {
         set({ loading: true, error: null });
         try {
-            const res = await fetch(`${API}/snapshots`);
+            const res = await fetch(`${API}/snapshots`, {
+                headers: getHeaders(),
+            });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Failed to fetch');
             set({ snapshots: data.snapshots || [] });
@@ -42,9 +67,8 @@ const useStore = create((set, get) => ({
             const market_date = new Date().toISOString().slice(0, 7); // YYYY-MM
             const res = await fetch(`${API}/snapshots`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getHeaders(),
                 body: JSON.stringify({
-                    user_id: 1,
                     market_date,
                     cash: Number(cash) || 0,
                     investments: Number(investments) || 0,
@@ -73,8 +97,8 @@ const useStore = create((set, get) => ({
         try {
             const res = await fetch(`${API}/advisor/generate`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ snapshot_id: snapshotId, user_id: 1, force }),
+                headers: getHeaders(),
+                body: JSON.stringify({ snapshot_id: snapshotId, force }),
             });
             const data = await res.json();
             

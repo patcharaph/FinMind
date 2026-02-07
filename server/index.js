@@ -2,8 +2,11 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
-const db = require('./db');
 const OpenAI = require('openai');
+
+// Database: Use Supabase in production, SQLite in development
+const USE_SUPABASE = process.env.USE_SUPABASE === 'true';
+const db = USE_SUPABASE ? require('./db-supabase') : require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -30,8 +33,11 @@ const apiLimiter = rateLimit({
 });
 app.use('/api/', apiLimiter);
 
-// Initialize Database
-db.initDb();
+// Initialize Database (SQLite only)
+if (!USE_SUPABASE && db.initDb) {
+    db.initDb();
+}
+console.log(`[server] Database: ${USE_SUPABASE ? 'Supabase (PostgreSQL)' : 'SQLite'}`);
 
 // OpenRouter / OpenAI Setup
 const openai = new OpenAI({
@@ -47,17 +53,36 @@ const ADVISOR_MODEL = process.env.ADVISOR_MODEL || 'google/gemini-2.5-flash';
 
 // --- Routes ---
 
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', message: 'FinMind Server is running' });
+app.get('/api/health', async (req, res) => {
+    if (USE_SUPABASE && db.healthCheck) {
+        const health = await db.healthCheck();
+        return res.json({ ...health, message: 'FinMind Server is running' });
+    }
+    res.json({ status: 'ok', database: 'sqlite', message: 'FinMind Server is running' });
 });
 
 // --- SNAPSHOTS API ---
 
-// GET /api/snapshots?user_id=1
-app.get('/api/snapshots', (req, res) => {
+// Helper: Get or create user by device_id (Supabase) or use numeric ID (SQLite)
+const resolveUserId = async (req) => {
+    const device_id = req.headers['x-device-id'] || req.query.device_id || req.body?.device_id;
+    
+    if (USE_SUPABASE) {
+        if (!device_id) throw new Error('device_id is required');
+        const user = await db.getOrCreateUser(device_id);
+        return user.id;
+    }
+    // SQLite fallback: use numeric user_id
+    return Number(req.query.user_id || req.body?.user_id) || 1;
+};
+
+// GET /api/snapshots
+app.get('/api/snapshots', async (req, res) => {
     try {
-        const userId = Number(req.query.user_id) || 1;
-        const snapshots = db.getSnapshots(userId);
+        const userId = await resolveUserId(req);
+        const snapshots = USE_SUPABASE 
+            ? await db.getSnapshots(userId)
+            : db.getSnapshots(userId);
         // Attach computed metrics to each snapshot
         const enriched = snapshots.map(s => ({ ...s, metrics: db.computeMetrics(s) }));
         res.json({ snapshots: enriched });
@@ -68,18 +93,18 @@ app.get('/api/snapshots', (req, res) => {
 });
 
 // POST /api/snapshots (upsert — one snapshot per month)
-app.post('/api/snapshots', (req, res) => {
+app.post('/api/snapshots', async (req, res) => {
     try {
-        const { user_id, market_date, cash, investments, debt, debt_interest_rate, income, expenses, risk_level } = req.body;
+        const { market_date, cash, investments, debt, debt_interest_rate, income, expenses, risk_level } = req.body;
 
         if (!market_date) {
             return res.status(400).json({ error: 'market_date is required (YYYY-MM)' });
         }
 
-        const userId = Number(user_id) || 1;
-        const snapshot = db.upsertSnapshot({
-            user_id: userId, market_date, cash, investments, debt, debt_interest_rate, income, expenses, risk_level
-        });
+        const userId = await resolveUserId(req);
+        const snapshot = USE_SUPABASE
+            ? await db.upsertSnapshot({ user_id: userId, market_date, cash, investments, debt, debt_interest_rate, income, expenses, risk_level })
+            : db.upsertSnapshot({ user_id: userId, market_date, cash, investments, debt, debt_interest_rate, income, expenses, risk_level });
         const metrics = db.computeMetrics(snapshot);
 
         res.json({ success: true, snapshot: { ...snapshot, metrics } });
@@ -140,27 +165,44 @@ OUTPUT FORMAT (strict JSON):
 };
 
 // GET /api/advisor/usage - Check AI usage for today
-app.get('/api/advisor/usage', (req, res) => {
-    const userId = Number(req.query.user_id) || 1;
-    const usage = db.getAiUsageInfo(userId);
-    res.json(usage);
+app.get('/api/advisor/usage', async (req, res) => {
+    try {
+        const userId = await resolveUserId(req);
+        const usage = USE_SUPABASE 
+            ? await db.getAiUsageInfo(userId)
+            : db.getAiUsageInfo(userId);
+        res.json(usage);
+    } catch (err) {
+        console.error('[advisor:usage]', err);
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // POST /api/advisor/generate
 app.post('/api/advisor/generate', async (req, res) => {
-    const { snapshot_id, user_id, force } = req.body;
-    const userId = Number(user_id) || 1;
+    const { snapshot_id, force } = req.body;
 
     if (!process.env.OPENROUTER_API_KEY) {
         return res.status(500).json({ error: 'Missing OPENROUTER_API_KEY. Set it in server/.env' });
     }
 
+    let userId;
+    try {
+        userId = await resolveUserId(req);
+    } catch (err) {
+        return res.status(400).json({ error: err.message });
+    }
+
     try {
         // 1. Return cached advice unless force refresh (cached doesn't count against limit)
         if (!force) {
-            const cached = db.getAdviceForSnapshot(snapshot_id);
+            const cached = USE_SUPABASE 
+                ? await db.getAdviceForSnapshot(snapshot_id)
+                : db.getAdviceForSnapshot(snapshot_id);
             if (cached) {
-                const usage = db.getAiUsageInfo(userId);
+                const usage = USE_SUPABASE 
+                    ? await db.getAiUsageInfo(userId)
+                    : db.getAiUsageInfo(userId);
                 return res.json({
                     financial_status: cached.financial_status,
                     risk_level: cached.risk_level,
@@ -175,8 +217,11 @@ app.post('/api/advisor/generate', async (req, res) => {
         }
 
         // 2. Check daily AI limit (only for new/forced requests)
-        if (!db.canUseAi(userId)) {
-            const usage = db.getAiUsageInfo(userId);
+        const canUse = USE_SUPABASE ? await db.canUseAi(userId) : db.canUseAi(userId);
+        if (!canUse) {
+            const usage = USE_SUPABASE 
+                ? await db.getAiUsageInfo(userId)
+                : db.getAiUsageInfo(userId);
             return res.status(429).json({
                 error: "You've reached this month's AI advice limit.",
                 message: "Upgrade to unlock unlimited insights.",
@@ -186,7 +231,9 @@ app.post('/api/advisor/generate', async (req, res) => {
         }
 
         // 3. Fetch snapshot
-        const snapshot = db.getSnapshotById(snapshot_id, userId);
+        const snapshot = USE_SUPABASE
+            ? await db.getSnapshotById(snapshot_id, userId)
+            : db.getSnapshotById(snapshot_id, userId);
         if (!snapshot) {
             return res.status(404).json({ error: 'Snapshot not found' });
         }
@@ -208,7 +255,11 @@ app.post('/api/advisor/generate', async (req, res) => {
         const content = completion.choices[0].message.content;
 
         // 5. Increment usage counter (only after successful AI call)
-        db.incrementAiUsage(userId);
+        if (USE_SUPABASE) {
+            await db.incrementAiUsage(userId);
+        } else {
+            db.incrementAiUsage(userId);
+        }
 
         // 6. Parse response
         let advice;
@@ -230,16 +281,28 @@ app.post('/api/advisor/generate', async (req, res) => {
         };
 
         // 8. Save to DB
-        db.saveAdvice({
-            user_id: userId,
-            snapshot_id,
-            ...result,
-            raw_response: content,
-            model_used: ADVISOR_MODEL,
-        });
+        if (USE_SUPABASE) {
+            await db.saveAdvice({
+                user_id: userId,
+                snapshot_id,
+                ...result,
+                raw_response: content,
+                model_used: ADVISOR_MODEL,
+            });
+        } else {
+            db.saveAdvice({
+                user_id: userId,
+                snapshot_id,
+                ...result,
+                raw_response: content,
+                model_used: ADVISOR_MODEL,
+            });
+        }
 
         // 9. Return with usage info
-        const usage = db.getAiUsageInfo(userId);
+        const usage = USE_SUPABASE 
+            ? await db.getAiUsageInfo(userId)
+            : db.getAiUsageInfo(userId);
         res.json({ ...result, usage });
 
     } catch (err) {
