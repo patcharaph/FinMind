@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import useStore from '../store/useStore';
-import { Sparkles, AlertTriangle, RefreshCw, Lightbulb, CheckCircle, Brain, ArrowRight, Shield, Droplets } from 'lucide-react';
+import { Sparkles, AlertTriangle, RefreshCw, Lightbulb, CheckCircle, Brain, ArrowRight, Shield, Droplets, Lock, Zap } from 'lucide-react';
 
 const statusColor = (level) => {
     if (!level) return 'text-finmind-warning';
@@ -23,12 +23,14 @@ const AdvisorPage = ({ onNavigate }) => {
     const advice = useStore((s) => s.advice);
     const adviceLoading = useStore((s) => s.adviceLoading);
     const error = useStore((s) => s.error);
+    const limitReached = useStore((s) => s.limitReached);
+    const usage = useStore((s) => s.usage);
     const generateAdvice = useStore((s) => s.generateAdvice);
 
     const current = snapshots[0];
 
     useEffect(() => {
-        if (current && !advice && !adviceLoading) {
+        if (current && !advice && !adviceLoading && !limitReached) {
             generateAdvice(current.id);
         }
     }, [current?.id]);
@@ -36,6 +38,36 @@ const AdvisorPage = ({ onNavigate }) => {
     const handleRefresh = () => {
         if (current) generateAdvice(current.id, true);
     };
+
+    // Limit Reached UI
+    if (limitReached) {
+        return (
+            <div className="flex flex-col items-center justify-center text-center space-y-6 animate-fade-in pt-12 pb-24">
+                <div className="w-20 h-20 bg-gradient-to-br from-finmind-warning/20 to-finmind-secondary/20 rounded-2xl flex items-center justify-center">
+                    <Lock size={36} className="text-finmind-warning" />
+                </div>
+                <div>
+                    <h2 className="text-2xl font-bold text-white mb-2">You've reached this month's AI advice limit.</h2>
+                    <p className="text-finmind-muted text-sm">Upgrade to unlock unlimited insights.</p>
+                </div>
+                {usage && (
+                    <div className="flex items-center space-x-2 text-xs text-finmind-muted">
+                        <span className="px-3 py-1.5 bg-slate-800 rounded-full">
+                            {usage.used}/{usage.limit} requests used today
+                        </span>
+                    </div>
+                )}
+                <button
+                    className="flex items-center bg-gradient-to-r from-finmind-warning to-finmind-secondary text-slate-900 font-bold px-8 py-3 rounded-xl hover:shadow-[0_0_20px_rgba(255,59,154,0.4)] transition-all"
+                >
+                    <Zap size={18} className="mr-2" /> Upgrade to Pro
+                </button>
+                <p className="text-finmind-muted text-xs opacity-50">
+                    Your previous advice is still available in history.
+                </p>
+            </div>
+        );
+    }
 
     if (!current) {
         return (

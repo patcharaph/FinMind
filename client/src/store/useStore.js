@@ -9,6 +9,8 @@ const useStore = create((set, get) => ({
     loading: false,
     adviceLoading: false,
     error: null,
+    limitReached: false,
+    usage: null,
 
     // --- Derived (computed from snapshots) ---
     get currentSnapshot() {
@@ -67,7 +69,7 @@ const useStore = create((set, get) => ({
     },
 
     generateAdvice: async (snapshotId, force = false) => {
-        set({ adviceLoading: true, error: null });
+        set({ adviceLoading: true, error: null, limitReached: false });
         try {
             const res = await fetch(`${API}/advisor/generate`, {
                 method: 'POST',
@@ -75,8 +77,20 @@ const useStore = create((set, get) => ({
                 body: JSON.stringify({ snapshot_id: snapshotId, user_id: 1, force }),
             });
             const data = await res.json();
+            
+            // Handle limit reached (429)
+            if (res.status === 429 && data.limit_reached) {
+                set({ 
+                    limitReached: true, 
+                    usage: data.usage,
+                    error: null,
+                    advice: null,
+                });
+                return null;
+            }
+            
             if (!res.ok) throw new Error(data.error || 'Failed to get advice');
-            set({ advice: data });
+            set({ advice: data, usage: data.usage || null, limitReached: false });
             return data;
         } catch (err) {
             set({ error: err.message });

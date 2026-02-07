@@ -178,7 +178,9 @@ app.post('/api/advisor/generate', async (req, res) => {
         if (!db.canUseAi(userId)) {
             const usage = db.getAiUsageInfo(userId);
             return res.status(429).json({
-                error: `Daily AI limit reached (${usage.limit} requests/day). Try again tomorrow.`,
+                error: "You've reached this month's AI advice limit.",
+                message: "Upgrade to unlock unlimited insights.",
+                limit_reached: true,
                 usage,
             });
         }
