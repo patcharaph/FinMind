@@ -171,20 +171,37 @@ const DashboardPage = ({ onNavigate }) => {
 
             {/* KPI Grid — 2 cols */}
             <div className="grid grid-cols-2 gap-4">
-                {/* Cash/Debt Ratio */}
+                {/* Total Assets */}
                 <div className="bg-finmind-card p-4 rounded-2xl border border-slate-700/50">
                     <div className="flex justify-between items-start mb-2">
-                        <span className="text-xs font-bold text-finmind-muted uppercase">Cash / Debt Ratio</span>
-                        <ArrowUpDown size={16} className="text-slate-600" />
+                        <span className="text-xs font-bold text-finmind-muted uppercase">Total Assets</span>
+                        <TrendingUp size={16} className="text-finmind-success" />
                     </div>
-                    <div className="text-3xl font-bold text-finmind-secondary">
-                        {m.cashDebtRatio === -1 ? '∞' : m.cashDebtRatio.toFixed(2)}
+                    <div className="text-3xl font-bold text-finmind-success">
+                        {fmtK(m.totalAssets || 0)}
                     </div>
                     <div className="mt-1">
-                        <PctBadge value={pm ? pctChange(m.cashDebtRatio === -1 ? 999 : m.cashDebtRatio, pm.cashDebtRatio === -1 ? 999 : pm.cashDebtRatio) : null} />
+                        <PctBadge value={pctChange(m.totalAssets, pm?.totalAssets)} />
                     </div>
                 </div>
 
+                {/* Total Debt */}
+                <div className="bg-finmind-card p-4 rounded-2xl border border-slate-700/50">
+                    <div className="flex justify-between items-start mb-2">
+                        <span className="text-xs font-bold text-finmind-muted uppercase">Total Debt</span>
+                        <TrendingDown size={16} className="text-finmind-secondary" />
+                    </div>
+                    <div className="text-3xl font-bold text-finmind-secondary">
+                        {fmtK(m.totalDebt || 0)}
+                    </div>
+                    <div className="mt-1">
+                        <PctBadge value={pm?.totalDebt ? pctChange(m.totalDebt, pm.totalDebt) : null} />
+                    </div>
+                </div>
+            </div>
+
+            {/* Second Row — Surplus & Runway */}
+            <div className="grid grid-cols-2 gap-4">
                 {/* Monthly Surplus */}
                 <div className="bg-finmind-card p-4 rounded-2xl border border-slate-700/50">
                     <div className="flex justify-between items-start mb-2">
@@ -196,6 +213,20 @@ const DashboardPage = ({ onNavigate }) => {
                     </div>
                     <div className="text-xs text-finmind-muted mt-1">
                         Save {(m.savingsRate * 100).toFixed(0)}% of income
+                    </div>
+                </div>
+
+                {/* Emergency Runway */}
+                <div className="bg-finmind-card p-4 rounded-2xl border border-slate-700/50">
+                    <div className="flex justify-between items-start mb-2">
+                        <span className="text-xs font-bold text-finmind-muted uppercase">Emergency Runway</span>
+                        <Shield size={16} className="text-finmind-warning" />
+                    </div>
+                    <div className={`text-3xl font-bold ${runwayColor}`}>
+                        {m.runwayMonths}mo
+                    </div>
+                    <div className="text-xs text-finmind-muted mt-1">
+                        {runwayLabel}
                     </div>
                 </div>
             </div>

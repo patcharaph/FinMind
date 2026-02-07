@@ -18,12 +18,19 @@ CREATE TABLE IF NOT EXISTS snapshots (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     market_date TEXT NOT NULL,
-    cash NUMERIC DEFAULT 0,
+    -- Assets
+    cash_savings NUMERIC DEFAULT 0,
     investments NUMERIC DEFAULT 0,
-    debt NUMERIC DEFAULT 0,
+    personal_assets NUMERIC DEFAULT 0,
+    other_assets NUMERIC DEFAULT 0,
+    -- Liabilities
+    short_term_debt NUMERIC DEFAULT 0,
+    long_term_debt NUMERIC DEFAULT 0,
     debt_interest_rate NUMERIC DEFAULT 0,
+    -- Income/Expenses
     income NUMERIC DEFAULT 0,
     expenses NUMERIC DEFAULT 0,
+    -- Settings
     risk_level TEXT DEFAULT 'moderate',
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),

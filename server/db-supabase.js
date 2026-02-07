@@ -56,21 +56,37 @@ const getUserByDeviceId = async (device_id) => {
 // --- Computed Metrics (pure function, no DB) ---
 
 const computeMetrics = (snap) => {
-    const cash = Number(snap.cash) || 0;
+    // Assets (support both old and new field names)
+    const cashSavings = Number(snap.cash_savings) || Number(snap.cash) || 0;
     const investments = Number(snap.investments) || 0;
-    const debt = Number(snap.debt) || 0;
+    const personalAssets = Number(snap.personal_assets) || 0;
+    const otherAssets = Number(snap.other_assets) || 0;
+    
+    // Liabilities (support both old and new field names)
+    const shortTermDebt = Number(snap.short_term_debt) || Number(snap.debt) || 0;
+    const longTermDebt = Number(snap.long_term_debt) || 0;
+    
+    // Income/Expenses
     const income = Number(snap.income) || 0;
     const expenses = Number(snap.expenses) || 0;
 
-    const netWorth = cash + investments - debt;
+    // Calculated values
+    const totalAssets = cashSavings + investments + personalAssets + otherAssets;
+    const liquidAssets = cashSavings + investments;
+    const totalDebt = shortTermDebt + longTermDebt;
+    const netWorth = totalAssets - totalDebt;
     const surplus = income - expenses;
     const savingsRate = income > 0 ? surplus / income : 0;
-    const runwayMonths = expenses > 0 ? cash / expenses : 0;
-    const cashDebtRatio = debt > 0 ? cash / debt : -1;
-    const debtToAsset = (cash + investments) > 0 ? debt / (cash + investments) : 0;
-    const investmentRatio = (cash + investments) > 0 ? investments / (cash + investments) : 0;
+    const runwayMonths = expenses > 0 ? cashSavings / expenses : 0;
+    const cashDebtRatio = totalDebt > 0 ? cashSavings / totalDebt : -1;
+    const debtToAsset = totalAssets > 0 ? totalDebt / totalAssets : 0;
+    const investmentRatio = liquidAssets > 0 ? investments / liquidAssets : 0;
+    const liquidityRatio = shortTermDebt > 0 ? liquidAssets / shortTermDebt : -1;
 
     return {
+        totalAssets: Math.round(totalAssets * 100) / 100,
+        liquidAssets: Math.round(liquidAssets * 100) / 100,
+        totalDebt: Math.round(totalDebt * 100) / 100,
         netWorth: Math.round(netWorth * 100) / 100,
         surplus: Math.round(surplus * 100) / 100,
         savingsRate: Math.round(savingsRate * 10000) / 10000,
@@ -78,13 +94,19 @@ const computeMetrics = (snap) => {
         cashDebtRatio: cashDebtRatio === -1 ? -1 : Math.round(cashDebtRatio * 100) / 100,
         debtToAsset: Math.round(debtToAsset * 10000) / 10000,
         investmentRatio: Math.round(investmentRatio * 10000) / 10000,
+        liquidityRatio: liquidityRatio === -1 ? -1 : Math.round(liquidityRatio * 100) / 100,
     };
 };
 
 // --- Snapshot CRUD ---
 
 const upsertSnapshot = async (data) => {
-    const { user_id, market_date, cash, investments, debt, debt_interest_rate, income, expenses, risk_level } = data;
+    const { 
+        user_id, market_date, 
+        cash_savings, investments, personal_assets, other_assets,
+        short_term_debt, long_term_debt, debt_interest_rate,
+        income, expenses, risk_level 
+    } = data;
 
     // Check if snapshot exists for this user + month
     const { data: existing } = await supabase
@@ -97,9 +119,12 @@ const upsertSnapshot = async (data) => {
     const snapshotData = {
         user_id,
         market_date,
-        cash: Number(cash) || 0,
+        cash_savings: Number(cash_savings) || 0,
         investments: Number(investments) || 0,
-        debt: Number(debt) || 0,
+        personal_assets: Number(personal_assets) || 0,
+        other_assets: Number(other_assets) || 0,
+        short_term_debt: Number(short_term_debt) || 0,
+        long_term_debt: Number(long_term_debt) || 0,
         debt_interest_rate: Number(debt_interest_rate) || 0,
         income: Number(income) || 0,
         expenses: Number(expenses) || 0,

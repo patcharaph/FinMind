@@ -95,16 +95,27 @@ app.get('/api/snapshots', async (req, res) => {
 // POST /api/snapshots (upsert — one snapshot per month)
 app.post('/api/snapshots', async (req, res) => {
     try {
-        const { market_date, cash, investments, debt, debt_interest_rate, income, expenses, risk_level } = req.body;
+        const { 
+            market_date, 
+            cash_savings, investments, personal_assets, other_assets,
+            short_term_debt, long_term_debt, debt_interest_rate,
+            income, expenses, risk_level 
+        } = req.body;
 
         if (!market_date) {
             return res.status(400).json({ error: 'market_date is required (YYYY-MM)' });
         }
 
         const userId = await resolveUserId(req);
+        const snapshotData = { 
+            user_id: userId, market_date, 
+            cash_savings, investments, personal_assets, other_assets,
+            short_term_debt, long_term_debt, debt_interest_rate,
+            income, expenses, risk_level 
+        };
         const snapshot = USE_SUPABASE
-            ? await db.upsertSnapshot({ user_id: userId, market_date, cash, investments, debt, debt_interest_rate, income, expenses, risk_level })
-            : db.upsertSnapshot({ user_id: userId, market_date, cash, investments, debt, debt_interest_rate, income, expenses, risk_level });
+            ? await db.upsertSnapshot(snapshotData)
+            : db.upsertSnapshot(snapshotData);
         const metrics = db.computeMetrics(snapshot);
 
         res.json({ success: true, snapshot: { ...snapshot, metrics } });
@@ -134,23 +145,41 @@ RULES:
 - Return ONLY a valid JSON object. No markdown. No pre-text. No post-text.`;
 
 const buildUserPrompt = (snapshot, metrics) => {
+    // Support both old and new field names
+    const cashSavings = snapshot.cash_savings || snapshot.cash || 0;
+    const shortTermDebt = snapshot.short_term_debt || snapshot.debt || 0;
+    const longTermDebt = snapshot.long_term_debt || 0;
+    
     return `INPUT DATA:
-- Cash & Savings: $${snapshot.cash}
-- Monthly Income: $${snapshot.income}
-- Monthly Expenses: $${snapshot.expenses}
-- Total Debt: $${snapshot.debt}
+ASSETS:
+- Cash & Savings: $${cashSavings}
+- Investment Portfolio: $${snapshot.investments || 0}
+- Personal Assets (Home, Car): $${snapshot.personal_assets || 0}
+- Other Assets: $${snapshot.other_assets || 0}
+
+LIABILITIES:
+- Short-term Debt: $${shortTermDebt}
+- Long-term Debt: $${longTermDebt}
 - Avg Debt Interest Rate: ${snapshot.debt_interest_rate || 0}%
-- Investment Portfolio: $${snapshot.investments}
+
+CASH FLOW:
+- Monthly Income: $${snapshot.income || 0}
+- Monthly Expenses: $${snapshot.expenses || 0}
+
+SETTINGS:
 - Investment Risk Level: ${snapshot.risk_level || 'moderate'}
 - Snapshot Period: ${snapshot.market_date}
 
 COMPUTED METRICS:
+- Total Assets: $${metrics.totalAssets}
+- Liquid Assets: $${metrics.liquidAssets}
+- Total Debt: $${metrics.totalDebt}
 - Net Worth: $${metrics.netWorth}
 - Monthly Surplus: $${metrics.surplus}
 - Savings Rate: ${(metrics.savingsRate * 100).toFixed(1)}%
-- Runway: ${metrics.runwayMonths} months
-- Cash/Debt Ratio: ${metrics.cashDebtRatio === -1 ? 'Debt-free' : metrics.cashDebtRatio}
+- Emergency Runway: ${metrics.runwayMonths} months
 - Debt-to-Asset Ratio: ${(metrics.debtToAsset * 100).toFixed(1)}%
+- Liquidity Ratio: ${metrics.liquidityRatio === -1 ? 'No short-term debt' : metrics.liquidityRatio}
 - Investment Ratio: ${(metrics.investmentRatio * 100).toFixed(1)}%
 
 OUTPUT FORMAT (strict JSON):

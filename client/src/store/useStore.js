@@ -61,7 +61,11 @@ const useStore = create((set, get) => ({
         }
     },
 
-    saveSnapshot: async ({ cash, investments, debt, debt_interest_rate, income, expenses, risk_level }) => {
+    saveSnapshot: async ({ 
+        cash_savings, investments, personal_assets, other_assets,
+        short_term_debt, long_term_debt, debt_interest_rate,
+        income, expenses, risk_level 
+    }) => {
         set({ loading: true, error: null });
         try {
             const market_date = new Date().toISOString().slice(0, 7); // YYYY-MM
@@ -70,9 +74,12 @@ const useStore = create((set, get) => ({
                 headers: getHeaders(),
                 body: JSON.stringify({
                     market_date,
-                    cash: Number(cash) || 0,
+                    cash_savings: Number(cash_savings) || 0,
                     investments: Number(investments) || 0,
-                    debt: Number(debt) || 0,
+                    personal_assets: Number(personal_assets) || 0,
+                    other_assets: Number(other_assets) || 0,
+                    short_term_debt: Number(short_term_debt) || 0,
+                    long_term_debt: Number(long_term_debt) || 0,
                     debt_interest_rate: Number(debt_interest_rate) || 0,
                     income: Number(income) || 0,
                     expenses: Number(expenses) || 0,

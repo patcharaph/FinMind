@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import useStore from '../store/useStore';
-import { Wallet, TrendingUp, TrendingDown, CreditCard, BarChart3, Save, ShieldCheck, Eraser, Percent, ChevronDown } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, CreditCard, BarChart3, Save, ShieldCheck, Eraser, Percent, ChevronDown, Home, Package, Clock, Calendar } from 'lucide-react';
 
 const CurrencyInput = ({ label, icon: Icon, value, onChange }) => (
     <div className="bg-finmind-card rounded-2xl border border-slate-700/50 p-4">
@@ -83,12 +83,19 @@ const InputPage = ({ onNavigate }) => {
     const current = snapshots[0];
 
     const [form, setForm] = useState({
-        cash: current?.cash?.toString() || '',
+        // Assets
+        cash_savings: current?.cash_savings?.toString() || current?.cash?.toString() || '',
+        investments: current?.investments?.toString() || '',
+        personal_assets: current?.personal_assets?.toString() || '',
+        other_assets: current?.other_assets?.toString() || '',
+        // Liabilities
+        short_term_debt: current?.short_term_debt?.toString() || current?.debt?.toString() || '',
+        long_term_debt: current?.long_term_debt?.toString() || '',
+        debt_interest_rate: current?.debt_interest_rate?.toString() || '',
+        // Cash flow
         income: current?.income?.toString() || '',
         expenses: current?.expenses?.toString() || '',
-        debt: current?.debt?.toString() || '',
-        debt_interest_rate: current?.debt_interest_rate?.toString() || '',
-        investments: current?.investments?.toString() || '',
+        // Settings
         risk_level: current?.risk_level || 'moderate',
     });
     const [saved, setSaved] = useState(false);
@@ -96,7 +103,11 @@ const InputPage = ({ onNavigate }) => {
     const update = (field) => (value) => setForm((prev) => ({ ...prev, [field]: value }));
 
     const handleClear = () => {
-        setForm({ cash: '', income: '', expenses: '', debt: '', debt_interest_rate: '', investments: '', risk_level: 'moderate' });
+        setForm({ 
+            cash_savings: '', investments: '', personal_assets: '', other_assets: '',
+            short_term_debt: '', long_term_debt: '', debt_interest_rate: '',
+            income: '', expenses: '', risk_level: 'moderate' 
+        });
         setSaved(false);
     };
 
@@ -122,14 +133,40 @@ const InputPage = ({ onNavigate }) => {
                 <span className="text-xs text-finmind-muted">No login · No email · No tracking · AI only sees summarized data</span>
             </div>
 
-            {/* Form Fields */}
-            <CurrencyInput label="Cash & Savings" icon={Wallet} value={form.cash} onChange={update('cash')} />
-            <CurrencyInput label="Monthly Income" icon={TrendingUp} value={form.income} onChange={update('income')} />
-            <CurrencyInput label="Monthly Expenses" icon={TrendingDown} value={form.expenses} onChange={update('expenses')} />
-            <CurrencyInput label="Total Outstanding Debt" icon={CreditCard} value={form.debt} onChange={update('debt')} />
-            <PercentInput label="Avg Debt Interest Rate" icon={Percent} value={form.debt_interest_rate} onChange={update('debt_interest_rate')} />
-            <CurrencyInput label="Total Investments" icon={BarChart3} value={form.investments} onChange={update('investments')} />
-            <RiskSelect value={form.risk_level} onChange={update('risk_level')} />
+            {/* Assets Section */}
+            <div className="pt-2">
+                <h2 className="text-sm font-bold text-finmind-primary uppercase tracking-wider mb-3">Assets</h2>
+                <div className="space-y-3">
+                    <CurrencyInput label="Cash & Savings" icon={Wallet} value={form.cash_savings} onChange={update('cash_savings')} />
+                    <CurrencyInput label="Investments" icon={BarChart3} value={form.investments} onChange={update('investments')} />
+                    <CurrencyInput label="Personal Assets (Home, Car)" icon={Home} value={form.personal_assets} onChange={update('personal_assets')} />
+                    <CurrencyInput label="Other Assets" icon={Package} value={form.other_assets} onChange={update('other_assets')} />
+                </div>
+            </div>
+
+            {/* Liabilities Section */}
+            <div className="pt-2">
+                <h2 className="text-sm font-bold text-finmind-secondary uppercase tracking-wider mb-3">Liabilities</h2>
+                <div className="space-y-3">
+                    <CurrencyInput label="Short-term Debt" icon={Clock} value={form.short_term_debt} onChange={update('short_term_debt')} />
+                    <CurrencyInput label="Long-term Debt" icon={Calendar} value={form.long_term_debt} onChange={update('long_term_debt')} />
+                    <PercentInput label="Avg Debt Interest Rate" icon={Percent} value={form.debt_interest_rate} onChange={update('debt_interest_rate')} />
+                </div>
+            </div>
+
+            {/* Cash Flow Section */}
+            <div className="pt-2">
+                <h2 className="text-sm font-bold text-finmind-success uppercase tracking-wider mb-3">Monthly Cash Flow</h2>
+                <div className="space-y-3">
+                    <CurrencyInput label="Monthly Income" icon={TrendingUp} value={form.income} onChange={update('income')} />
+                    <CurrencyInput label="Monthly Expenses" icon={TrendingDown} value={form.expenses} onChange={update('expenses')} />
+                </div>
+            </div>
+
+            {/* Settings Section */}
+            <div className="pt-2">
+                <RiskSelect value={form.risk_level} onChange={update('risk_level')} />
+            </div>
 
             {/* Action Buttons */}
             <div className="flex gap-3">

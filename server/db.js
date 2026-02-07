@@ -21,12 +21,19 @@ const initDb = () => {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
             market_date TEXT NOT NULL,
-            cash REAL DEFAULT 0,
+            -- Assets
+            cash_savings REAL DEFAULT 0,
             investments REAL DEFAULT 0,
-            debt REAL DEFAULT 0,
+            personal_assets REAL DEFAULT 0,
+            other_assets REAL DEFAULT 0,
+            -- Liabilities
+            short_term_debt REAL DEFAULT 0,
+            long_term_debt REAL DEFAULT 0,
             debt_interest_rate REAL DEFAULT 0,
+            -- Income/Expenses
             income REAL DEFAULT 0,
             expenses REAL DEFAULT 0,
+            -- Settings
             risk_level TEXT DEFAULT 'moderate',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             UNIQUE(user_id, market_date),
@@ -66,6 +73,36 @@ const initDb = () => {
 
     // Migrate: add new columns if they don't exist
     const cols = db.prepare("PRAGMA table_info(snapshots)").all().map(c => c.name);
+    
+    // New asset/liability columns (v2)
+    if (!cols.includes('cash_savings')) {
+        db.exec("ALTER TABLE snapshots ADD COLUMN cash_savings REAL DEFAULT 0");
+        // Migrate old 'cash' data to 'cash_savings' if exists
+        if (cols.includes('cash')) {
+            db.exec("UPDATE snapshots SET cash_savings = cash WHERE cash_savings = 0 AND cash > 0");
+        }
+        console.log('[db] Added cash_savings column.');
+    }
+    if (!cols.includes('personal_assets')) {
+        db.exec("ALTER TABLE snapshots ADD COLUMN personal_assets REAL DEFAULT 0");
+        console.log('[db] Added personal_assets column.');
+    }
+    if (!cols.includes('other_assets')) {
+        db.exec("ALTER TABLE snapshots ADD COLUMN other_assets REAL DEFAULT 0");
+        console.log('[db] Added other_assets column.');
+    }
+    if (!cols.includes('short_term_debt')) {
+        db.exec("ALTER TABLE snapshots ADD COLUMN short_term_debt REAL DEFAULT 0");
+        // Migrate old 'debt' data to 'short_term_debt' if exists
+        if (cols.includes('debt')) {
+            db.exec("UPDATE snapshots SET short_term_debt = debt WHERE short_term_debt = 0 AND debt > 0");
+        }
+        console.log('[db] Added short_term_debt column.');
+    }
+    if (!cols.includes('long_term_debt')) {
+        db.exec("ALTER TABLE snapshots ADD COLUMN long_term_debt REAL DEFAULT 0");
+        console.log('[db] Added long_term_debt column.');
+    }
     if (!cols.includes('debt_interest_rate')) {
         db.exec("ALTER TABLE snapshots ADD COLUMN debt_interest_rate REAL DEFAULT 0");
         console.log('[db] Added debt_interest_rate column.');
@@ -86,42 +123,70 @@ const initDb = () => {
 // --- Computed metrics (pure functions, no DB) ---
 
 const computeMetrics = (snap) => {
-    const cash = Number(snap.cash) || 0;
+    // Assets (support both old and new field names)
+    const cashSavings = Number(snap.cash_savings) || Number(snap.cash) || 0;
     const investments = Number(snap.investments) || 0;
-    const debt = Number(snap.debt) || 0;
+    const personalAssets = Number(snap.personal_assets) || 0;
+    const otherAssets = Number(snap.other_assets) || 0;
+    
+    // Liabilities (support both old and new field names)
+    const shortTermDebt = Number(snap.short_term_debt) || Number(snap.debt) || 0;
+    const longTermDebt = Number(snap.long_term_debt) || 0;
+    
+    // Income/Expenses
     const income = Number(snap.income) || 0;
     const expenses = Number(snap.expenses) || 0;
 
-    const netWorth = cash + investments - debt;
+    // Calculated values
+    const totalAssets = cashSavings + investments + personalAssets + otherAssets;
+    const liquidAssets = cashSavings + investments; // Easily accessible
+    const totalDebt = shortTermDebt + longTermDebt;
+    const netWorth = totalAssets - totalDebt;
     const surplus = income - expenses;
     const savingsRate = income > 0 ? surplus / income : 0;
-    const runwayMonths = expenses > 0 ? cash / expenses : 0;
-    const cashDebtRatio = debt > 0 ? cash / debt : -1; // -1 = debt-free
-    const debtToAsset = (cash + investments) > 0 ? debt / (cash + investments) : 0;
-    const investmentRatio = (cash + investments) > 0 ? investments / (cash + investments) : 0;
+    const runwayMonths = expenses > 0 ? cashSavings / expenses : 0;
+    const cashDebtRatio = totalDebt > 0 ? cashSavings / totalDebt : -1; // -1 = debt-free
+    const debtToAsset = totalAssets > 0 ? totalDebt / totalAssets : 0;
+    const investmentRatio = liquidAssets > 0 ? investments / liquidAssets : 0;
+    const liquidityRatio = shortTermDebt > 0 ? liquidAssets / shortTermDebt : -1; // -1 = no short-term debt
 
     return {
+        // Totals
+        totalAssets: Math.round(totalAssets * 100) / 100,
+        liquidAssets: Math.round(liquidAssets * 100) / 100,
+        totalDebt: Math.round(totalDebt * 100) / 100,
         netWorth: Math.round(netWorth * 100) / 100,
+        // Cash flow
         surplus: Math.round(surplus * 100) / 100,
         savingsRate: Math.round(savingsRate * 10000) / 10000,
+        // Ratios
         runwayMonths: Math.round(runwayMonths * 10) / 10,
         cashDebtRatio: cashDebtRatio === -1 ? -1 : Math.round(cashDebtRatio * 100) / 100,
         debtToAsset: Math.round(debtToAsset * 10000) / 10000,
         investmentRatio: Math.round(investmentRatio * 10000) / 10000,
+        liquidityRatio: liquidityRatio === -1 ? -1 : Math.round(liquidityRatio * 100) / 100,
     };
 };
 
 // --- Snapshot CRUD ---
 
 const upsertSnapshot = (data) => {
-    const { user_id, market_date, cash, investments, debt, debt_interest_rate, income, expenses, risk_level } = data;
+    const { 
+        user_id, market_date, 
+        cash_savings, investments, personal_assets, other_assets,
+        short_term_debt, long_term_debt, debt_interest_rate,
+        income, expenses, risk_level 
+    } = data;
     const stmt = db.prepare(`
-        INSERT INTO snapshots (user_id, market_date, cash, investments, debt, debt_interest_rate, income, expenses, risk_level)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO snapshots (user_id, market_date, cash_savings, investments, personal_assets, other_assets, short_term_debt, long_term_debt, debt_interest_rate, income, expenses, risk_level)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(user_id, market_date) DO UPDATE SET
-            cash = excluded.cash,
+            cash_savings = excluded.cash_savings,
             investments = excluded.investments,
-            debt = excluded.debt,
+            personal_assets = excluded.personal_assets,
+            other_assets = excluded.other_assets,
+            short_term_debt = excluded.short_term_debt,
+            long_term_debt = excluded.long_term_debt,
             debt_interest_rate = excluded.debt_interest_rate,
             income = excluded.income,
             expenses = excluded.expenses,
@@ -129,8 +194,9 @@ const upsertSnapshot = (data) => {
             created_at = CURRENT_TIMESTAMP
     `);
     const info = stmt.run(user_id, market_date,
-        Number(cash) || 0, Number(investments) || 0, Number(debt) || 0,
-        Number(debt_interest_rate) || 0, Number(income) || 0, Number(expenses) || 0,
+        Number(cash_savings) || 0, Number(investments) || 0, Number(personal_assets) || 0, Number(other_assets) || 0,
+        Number(short_term_debt) || 0, Number(long_term_debt) || 0, Number(debt_interest_rate) || 0,
+        Number(income) || 0, Number(expenses) || 0,
         risk_level || 'moderate'
     );
     // Return the row (could be insert or update)
