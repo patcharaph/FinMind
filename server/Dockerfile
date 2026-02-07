@@ -10,7 +10,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
 # Copy source
-COPY index.js db.js ./
+COPY index.js db.js db-supabase.js ./
 
 # Cloud Run uses PORT env variable
 ENV PORT=8080
