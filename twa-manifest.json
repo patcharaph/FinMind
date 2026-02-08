@@ -4,13 +4,13 @@
   "name": "FinMind — AI Finance Copilot",
   "launcherName": "FinMind",
   "display": "standalone",
-  "themeColor": "#0f172a",
-  "themeColorDark": "#0f172a",
-  "navigationColor": "#0f172a",
-  "navigationColorDark": "#0f172a",
-  "navigationDividerColor": "#0f172a",
-  "navigationDividerColorDark": "#0f172a",
-  "backgroundColor": "#0f172a",
+  "themeColor": "#0F172A",
+  "themeColorDark": "#0F172A",
+  "navigationColor": "#0F172A",
+  "navigationColorDark": "#0F172A",
+  "navigationDividerColor": "#0F172A",
+  "navigationDividerColorDark": "#0F172A",
+  "backgroundColor": "#0F172A",
   "enableNotifications": false,
   "startUrl": "/",
   "iconUrl": "https://fin-mind-five.vercel.app/icon-512x512.png",
@@ -20,8 +20,8 @@
     "path": "./android.keystore",
     "alias": "finmind"
   },
-  "appVersionCode": 1,
-  "appVersionName": "1.0.0",
+  "appVersionName": "5",
+  "appVersionCode": 3,
   "shortcuts": [
     {
       "name": "Add Snapshot",
@@ -47,6 +47,11 @@
   "isChromeOSOnly": false,
   "isMetaQuest": false,
   "fullScopeUrl": "https://fin-mind-five.vercel.app/",
-  "minSdkVersion": 19,
-  "orientation": "portrait"
+  "minSdkVersion": 21,
+  "orientation": "portrait",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "displayOverride": [],
+  "appVersion": "5"
 }
