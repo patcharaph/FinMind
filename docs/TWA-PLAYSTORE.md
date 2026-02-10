@@ -76,7 +76,7 @@ Edit `client/public/.well-known/assetlinks.json`:
     "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
-      "package_name": "com.finmind.twa",
+      "package_name": "ai.finmind.app",
       "sha256_cert_fingerprints": [
         "AB:CD:EF:12:34:56:..."
       ]

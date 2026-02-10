@@ -1,5 +1,5 @@
 {
-  "packageId": "com.finmind.twa",
+  "packageId": "ai.finmind.app",
   "host": "fin-mind-five.vercel.app",
   "name": "FinMind — AI Finance Copilot",
   "launcherName": "FinMind",
@@ -20,8 +20,8 @@
     "path": "./android.keystore",
     "alias": "finmind"
   },
-  "appVersionName": "5",
-  "appVersionCode": 3,
+  "appVersionName": "7",
+  "appVersionCode": 6,
   "shortcuts": [
     {
       "name": "Add Snapshot",
@@ -53,5 +53,5 @@
   "additionalTrustedOrigins": [],
   "retainedBundles": [],
   "displayOverride": [],
-  "appVersion": "5"
+  "appVersion": "7"
 }

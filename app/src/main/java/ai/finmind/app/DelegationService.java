@@ -1,4 +1,4 @@
-package com.finmind.twa;
+package ai.finmind.app;
 
 
 
