@@ -26,8 +26,14 @@ const AdvisorPage = ({ onNavigate }) => {
     const limitReached = useStore((s) => s.limitReached);
     const usage = useStore((s) => s.usage);
     const generateAdvice = useStore((s) => s.generateAdvice);
+    const fetchUsage = useStore((s) => s.fetchUsage);
 
     const current = snapshots[0];
+
+    useEffect(() => {
+        // Fetch usage on mount
+        fetchUsage();
+    }, []);
 
     useEffect(() => {
         if (current && !advice && !adviceLoading && !limitReached) {
@@ -106,6 +112,29 @@ const AdvisorPage = ({ onNavigate }) => {
                     <span>Refresh</span>
                 </button>
             </div>
+
+            {/* AI Usage Display */}
+            {usage && (
+                <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                    <div className="flex items-center space-x-2">
+                        <Sparkles size={14} className="text-finmind-primary" />
+                        <span className="text-xs text-finmind-muted">Daily AI Usage</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <div className="flex space-x-1">
+                            {[...Array(usage.limit)].map((_, i) => (
+                                <div
+                                    key={i}
+                                    className={`w-2 h-2 rounded-full ${i < usage.used ? 'bg-finmind-primary' : 'bg-slate-600'}`}
+                                />
+                            ))}
+                        </div>
+                        <span className="text-xs text-finmind-muted">
+                            {usage.remaining}/{usage.limit} remaining
+                        </span>
+                    </div>
+                </div>
+            )}
 
             {/* Error */}
             {error && (

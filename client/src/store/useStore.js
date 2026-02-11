@@ -100,6 +100,20 @@ const useStore = create((set, get) => ({
         }
     },
 
+    fetchUsage: async () => {
+        try {
+            const res = await fetch(`${API}/advisor/usage`, {
+                headers: getHeaders(),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                set({ usage: data });
+            }
+        } catch (err) {
+            console.error('Failed to fetch usage:', err);
+        }
+    },
+
     generateAdvice: async (snapshotId, force = false) => {
         set({ adviceLoading: true, error: null, limitReached: false });
         try {
