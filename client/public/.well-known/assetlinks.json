@@ -1,23 +1,13 @@
 [
   {
-    "relation": ["delegate_permission/common.handle_all_urls"],
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
     "target": {
       "namespace": "android_app",
       "package_name": "ai.finmind.app",
       "sha256_cert_fingerprints": [
-        "8C:25:5B:15:94:F8:84:9E:BB:BE:79:98:27:3E:06:A9:16:38:D5:0D:87:9F:BF:D3:93:13:64:E1:38:5D",
-        "F0:7E:E4:75:D6:DD:4F:A6:5B:A1:13:FF:69:37:C8:60:15:70:EE:10:9A:43:3F:1F:F8:62:19:EB:93:E7:C0:74"
-      ]
-    }
-  },
-  {
-    "relation": ["delegate_permission/common.handle_all_urls"],
-    "target": {
-      "namespace": "android_app",
-      "package_name": "com.finmind.twa",
-      "sha256_cert_fingerprints": [
-        "8C:25:5B:15:94:F8:84:9E:BB:BE:79:98:27:3E:06:A9:16:38:D5:0D:87:9F:BF:D3:93:13:64:E1:38:5D",
-        "F0:7E:E4:75:D6:DD:4F:A6:5B:A1:13:FF:69:37:C8:60:15:70:EE:10:9A:43:3F:1F:F8:62:19:EB:93:E7:C0:74"
+        "8C:25:5B:15:94:F8:84:9E:BB:BE:79:98:27:3E:06:A9:16:38:D5:0D:87:9F:BF:D3:93:13:64:E1:38:5D:E6:45"
       ]
     }
   }
