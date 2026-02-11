@@ -22,9 +22,9 @@
      the abbreviated format.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.finmind.twa"
-    android:versionCode="3"
-    android:versionName="5" >
+    package="ai.finmind.app"
+    android:versionCode="6"
+    android:versionName="7" >
 
     <uses-sdk
         android:minSdkVersion="21"
@@ -41,13 +41,13 @@
     </queries>
 
     <permission
-        android:name="com.finmind.twa.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+        android:name="ai.finmind.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
         android:protectionLevel="signature" />
 
-    <uses-permission android:name="com.finmind.twa.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+    <uses-permission android:name="ai.finmind.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
 
     <application
-        android:name="com.finmind.twa.Application"
+        android:name="ai.finmind.app.Application"
         android:allowBackup="true"
         android:appComponentFactory="androidx.core.app.CoreComponentFactory"
         android:extractNativeLibs="true"
@@ -82,7 +82,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.finmind.twa.LauncherActivity"
+            android:name="ai.finmind.app.LauncherActivity"
             android:alwaysRetainTaskState="true"
             android:exported="true"
             android:label="@string/launcherName" >
@@ -161,7 +161,7 @@
         </provider>
 
         <service
-            android:name="com.finmind.twa.DelegationService"
+            android:name="ai.finmind.app.DelegationService"
             android:enabled="@bool/enableNotification"
             android:exported="@bool/enableNotification" >
             <intent-filter>
@@ -173,7 +173,7 @@
 
         <provider
             android:name="androidx.startup.InitializationProvider"
-            android:authorities="com.finmind.twa.androidx-startup"
+            android:authorities="ai.finmind.app.androidx-startup"
             android:exported="false" >
             <meta-data
                 android:name="androidx.emoji2.text.EmojiCompatInitializer"

@@ -66,7 +66,7 @@ app.get('/api/health', async (req, res) => {
 // Helper: Get or create user by device_id (Supabase) or use numeric ID (SQLite)
 const resolveUserId = async (req) => {
     const device_id = req.headers['x-device-id'] || req.query.device_id || req.body?.device_id;
-    
+
     if (USE_SUPABASE) {
         if (!device_id) throw new Error('device_id is required');
         const user = await db.getOrCreateUser(device_id);
@@ -80,7 +80,7 @@ const resolveUserId = async (req) => {
 app.get('/api/snapshots', async (req, res) => {
     try {
         const userId = await resolveUserId(req);
-        const snapshots = USE_SUPABASE 
+        const snapshots = USE_SUPABASE
             ? await db.getSnapshots(userId)
             : db.getSnapshots(userId);
         // Attach computed metrics to each snapshot
@@ -95,11 +95,11 @@ app.get('/api/snapshots', async (req, res) => {
 // POST /api/snapshots (upsert — one snapshot per month)
 app.post('/api/snapshots', async (req, res) => {
     try {
-        const { 
-            market_date, 
+        const {
+            market_date,
             cash_savings, investments, personal_assets, other_assets,
             short_term_debt, long_term_debt, debt_interest_rate,
-            income, expenses, risk_level 
+            income, expenses, risk_level
         } = req.body;
 
         if (!market_date) {
@@ -107,11 +107,11 @@ app.post('/api/snapshots', async (req, res) => {
         }
 
         const userId = await resolveUserId(req);
-        const snapshotData = { 
-            user_id: userId, market_date, 
+        const snapshotData = {
+            user_id: userId, market_date,
             cash_savings, investments, personal_assets, other_assets,
             short_term_debt, long_term_debt, debt_interest_rate,
-            income, expenses, risk_level 
+            income, expenses, risk_level
         };
         const snapshot = USE_SUPABASE
             ? await db.upsertSnapshot(snapshotData)
@@ -133,14 +133,14 @@ ANALYSIS FRAMEWORK (apply in order):
 1. LIQUIDITY CHECK — Is cash >= 3 months of expenses? (Emergency fund benchmark)
 2. DEBT ASSESSMENT — Debt-to-Asset ratio. If > 50%, flag as high leverage. Recommend Avalanche (highest interest first) or Snowball (smallest balance first).
 3. SAVINGS EFFICIENCY — Savings Rate = (Income - Expenses) / Income. Below 20% = needs improvement. Below 10% = critical.
-4. INVESTMENT EXPOSURE — Investments / (Cash + Investments). Under-invested (< 40%) or over-concentrated (> 80%).
+4. INVESTMENT ALLOCATION — Use the "Rule of 110" (110 - Age = % Equities) as a baseline. Adjust for risk profile.
 5. RUNWAY — Cash / Monthly Expenses = months of survival. Below 3 = danger. 3-6 = adequate. 6+ = strong.
 
 RULES:
 - Always reference specific numbers from the input (e.g., "Your $12,000 cash covers 3.2 months of expenses").
 - Never use vague advice like "save more" — always quantify (e.g., "Increase monthly savings by $200").
 - If debt exists, name a specific repayment strategy (Avalanche or Snowball) and explain why.
-- If investments are zero, recommend starting with a specific allocation.
+- If investments are zero, recommend starting with a specific allocation based on Age (e.g. "At age 30, aim for 80% equities").
 - Maximum 3 key_insights and 3 actionable_steps. Quality over quantity.
 - Return ONLY a valid JSON object. No markdown. No pre-text. No post-text.`;
 
@@ -149,8 +149,11 @@ const buildUserPrompt = (snapshot, metrics) => {
     const cashSavings = snapshot.cash_savings || snapshot.cash || 0;
     const shortTermDebt = snapshot.short_term_debt || snapshot.debt || 0;
     const longTermDebt = snapshot.long_term_debt || 0;
-    
+    const age = snapshot.age || 0;
+
     return `INPUT DATA:
+PERSONAL:
+- Age: ${age > 0 ? age : 'Not specified'}
 ASSETS:
 - Cash & Savings: $${cashSavings}
 - Investment Portfolio: $${snapshot.investments || 0}
@@ -197,7 +200,7 @@ OUTPUT FORMAT (strict JSON):
 app.get('/api/advisor/usage', async (req, res) => {
     try {
         const userId = await resolveUserId(req);
-        const usage = USE_SUPABASE 
+        const usage = USE_SUPABASE
             ? await db.getAiUsageInfo(userId)
             : db.getAiUsageInfo(userId);
         res.json(usage);
@@ -225,11 +228,11 @@ app.post('/api/advisor/generate', async (req, res) => {
     try {
         // 1. Return cached advice unless force refresh (cached doesn't count against limit)
         if (!force) {
-            const cached = USE_SUPABASE 
+            const cached = USE_SUPABASE
                 ? await db.getAdviceForSnapshot(snapshot_id)
                 : db.getAdviceForSnapshot(snapshot_id);
             if (cached) {
-                const usage = USE_SUPABASE 
+                const usage = USE_SUPABASE
                     ? await db.getAiUsageInfo(userId)
                     : db.getAiUsageInfo(userId);
                 return res.json({
@@ -248,7 +251,7 @@ app.post('/api/advisor/generate', async (req, res) => {
         // 2. Check daily AI limit (only for new/forced requests)
         const canUse = USE_SUPABASE ? await db.canUseAi(userId) : db.canUseAi(userId);
         if (!canUse) {
-            const usage = USE_SUPABASE 
+            const usage = USE_SUPABASE
                 ? await db.getAiUsageInfo(userId)
                 : db.getAiUsageInfo(userId);
             return res.status(429).json({
@@ -329,7 +332,7 @@ app.post('/api/advisor/generate', async (req, res) => {
         }
 
         // 9. Return with usage info
-        const usage = USE_SUPABASE 
+        const usage = USE_SUPABASE
             ? await db.getAiUsageInfo(userId)
             : db.getAiUsageInfo(userId);
         res.json({ ...result, usage });

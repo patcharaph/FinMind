@@ -22,9 +22,9 @@
 22     the abbreviated format.
 23-->
 24<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-25    package="com.finmind.twa"
-26    android:versionCode="3"
-27    android:versionName="5" >
+25    package="ai.finmind.app"
+26    android:versionCode="6"
+27    android:versionName="7" >
 28
 29    <uses-sdk
 30        android:minSdkVersion="21"
@@ -50,18 +50,18 @@
 42
 43    <permission
 43-->[androidx.core:core:1.13.0] C:\Users\patchara\.gradle\caches\8.11.1\transforms\a5429f7b20c607b890f08b5283ad4ec0\transformed\core-1.13.0\AndroidManifest.xml:22:5-24:47
-44        android:name="com.finmind.twa.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+44        android:name="ai.finmind.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
 44-->[androidx.core:core:1.13.0] C:\Users\patchara\.gradle\caches\8.11.1\transforms\a5429f7b20c607b890f08b5283ad4ec0\transformed\core-1.13.0\AndroidManifest.xml:23:9-81
 45        android:protectionLevel="signature" />
 45-->[androidx.core:core:1.13.0] C:\Users\patchara\.gradle\caches\8.11.1\transforms\a5429f7b20c607b890f08b5283ad4ec0\transformed\core-1.13.0\AndroidManifest.xml:24:9-44
 46
-47    <uses-permission android:name="com.finmind.twa.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+47    <uses-permission android:name="ai.finmind.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
 47-->[androidx.core:core:1.13.0] C:\Users\patchara\.gradle\caches\8.11.1\transforms\a5429f7b20c607b890f08b5283ad4ec0\transformed\core-1.13.0\AndroidManifest.xml:26:5-97
 47-->[androidx.core:core:1.13.0] C:\Users\patchara\.gradle\caches\8.11.1\transforms\a5429f7b20c607b890f08b5283ad4ec0\transformed\core-1.13.0\AndroidManifest.xml:26:22-94
 48
 49    <application
 49-->D:\GitHub\FinMind\app\src\main\AndroidManifest.xml:33:5-191:19
-50        android:name="com.finmind.twa.Application"
+50        android:name="ai.finmind.app.Application"
 50-->D:\GitHub\FinMind\app\src\main\AndroidManifest.xml:34:9-35
 51        android:allowBackup="true"
 51-->D:\GitHub\FinMind\app\src\main\AndroidManifest.xml:35:9-35
@@ -127,7 +127,7 @@
 83        </activity>
 84        <activity
 84-->D:\GitHub\FinMind\app\src\main\AndroidManifest.xml:77:9-158:20
-85            android:name="com.finmind.twa.LauncherActivity"
+85            android:name="ai.finmind.app.LauncherActivity"
 85-->D:\GitHub\FinMind\app\src\main\AndroidManifest.xml:77:19-50
 86            android:alwaysRetainTaskState="true"
 86-->D:\GitHub\FinMind\app\src\main\AndroidManifest.xml:78:13-49
@@ -282,7 +282,7 @@
 162
 163        <service
 163-->D:\GitHub\FinMind\app\src\main\AndroidManifest.xml:175:9-186:19
-164            android:name="com.finmind.twa.DelegationService"
+164            android:name="ai.finmind.app.DelegationService"
 164-->D:\GitHub\FinMind\app\src\main\AndroidManifest.xml:176:13-46
 165            android:enabled="@bool/enableNotification"
 165-->D:\GitHub\FinMind\app\src\main\AndroidManifest.xml:177:13-55
@@ -304,7 +304,7 @@
 174-->[androidx.emoji2:emoji2:1.3.0] C:\Users\patchara\.gradle\caches\8.11.1\transforms\5cb7738f5242d8c4e38c8ffa2b265b31\transformed\emoji2-1.3.0\AndroidManifest.xml:24:9-32:20
 175            android:name="androidx.startup.InitializationProvider"
 175-->[androidx.emoji2:emoji2:1.3.0] C:\Users\patchara\.gradle\caches\8.11.1\transforms\5cb7738f5242d8c4e38c8ffa2b265b31\transformed\emoji2-1.3.0\AndroidManifest.xml:25:13-67
-176            android:authorities="com.finmind.twa.androidx-startup"
+176            android:authorities="ai.finmind.app.androidx-startup"
 176-->[androidx.emoji2:emoji2:1.3.0] C:\Users\patchara\.gradle\caches\8.11.1\transforms\5cb7738f5242d8c4e38c8ffa2b265b31\transformed\emoji2-1.3.0\AndroidManifest.xml:26:13-68
 177            android:exported="false" >
 177-->[androidx.emoji2:emoji2:1.3.0] C:\Users\patchara\.gradle\caches\8.11.1\transforms\5cb7738f5242d8c4e38c8ffa2b265b31\transformed\emoji2-1.3.0\AndroidManifest.xml:27:13-37

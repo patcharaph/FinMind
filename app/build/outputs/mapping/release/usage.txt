@@ -2,6 +2,15 @@ _COROUTINE.ArtificialStackFrames
 _COROUTINE.CoroutineDebuggingKt
 _COROUTINE._BOUNDARY
 _COROUTINE._CREATION
+ai.finmind.app.R$bool
+ai.finmind.app.R$color
+ai.finmind.app.R$drawable
+ai.finmind.app.R$integer
+ai.finmind.app.R$mipmap
+ai.finmind.app.R$raw
+ai.finmind.app.R$string
+ai.finmind.app.R$xml
+ai.finmind.app.R
 android.support.customtabs.IAuthTabCallback$Default
 android.support.customtabs.IAuthTabCallback$Stub$Proxy
 android.support.customtabs.IAuthTabCallback$Stub
@@ -7650,15 +7659,6 @@ androidx.viewpager.widget.ViewPager$SavedState
 androidx.viewpager.widget.ViewPager$SimpleOnPageChangeListener
 androidx.viewpager.widget.ViewPager$ViewPositionComparator
 androidx.viewpager.widget.ViewPager
-com.finmind.twa.R$bool
-com.finmind.twa.R$color
-com.finmind.twa.R$drawable
-com.finmind.twa.R$integer
-com.finmind.twa.R$mipmap
-com.finmind.twa.R$raw
-com.finmind.twa.R$string
-com.finmind.twa.R$xml
-com.finmind.twa.R
 com.google.androidbrowserhelper.BuildConfig
 com.google.androidbrowserhelper.R$drawable:
     private void <init>()

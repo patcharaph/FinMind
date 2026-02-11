@@ -97,16 +97,17 @@ const InputPage = ({ onNavigate }) => {
         expenses: current?.expenses?.toString() || '',
         // Settings
         risk_level: current?.risk_level || 'moderate',
+        age: current?.age?.toString() || '',
     });
     const [saved, setSaved] = useState(false);
 
     const update = (field) => (value) => setForm((prev) => ({ ...prev, [field]: value }));
 
     const handleClear = () => {
-        setForm({ 
+        setForm({
             cash_savings: '', investments: '', personal_assets: '', other_assets: '',
             short_term_debt: '', long_term_debt: '', debt_interest_rate: '',
-            income: '', expenses: '', risk_level: 'moderate' 
+            income: '', expenses: '', risk_level: 'moderate', age: ''
         });
         setSaved(false);
     };
@@ -131,6 +132,11 @@ const InputPage = ({ onNavigate }) => {
             <div className="flex items-center space-x-3 bg-finmind-card/50 rounded-xl p-3 border border-slate-700/30">
                 <ShieldCheck size={18} className="text-finmind-success flex-shrink-0" />
                 <span className="text-xs text-finmind-muted">No login · No email · No tracking · AI only sees summarized data</span>
+            </div>
+
+            {/* Personal Section */}
+            <div className="pt-2">
+                <CurrencyInput label="Age" icon={Clock} value={form.age} onChange={update('age')} />
             </div>
 
             {/* Assets Section */}

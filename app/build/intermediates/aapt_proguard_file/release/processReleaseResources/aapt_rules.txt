@@ -1,10 +1,10 @@
+-keep class ai.finmind.app.Application { <init>(); }
+-keep class ai.finmind.app.DelegationService { <init>(); }
+-keep class ai.finmind.app.LauncherActivity { <init>(); }
 -keep class androidx.core.app.CoreComponentFactory { <init>(); }
 -keep class androidx.core.content.FileProvider { <init>(); }
 -keep class androidx.profileinstaller.ProfileInstallReceiver { <init>(); }
 -keep class androidx.startup.InitializationProvider { <init>(); }
--keep class com.finmind.twa.Application { <init>(); }
--keep class com.finmind.twa.DelegationService { <init>(); }
--keep class com.finmind.twa.LauncherActivity { <init>(); }
 -keep class com.google.androidbrowserhelper.trusted.FocusActivity { <init>(); }
 -keep class com.google.androidbrowserhelper.trusted.ManageDataLauncherActivity { <init>(); }
 -keep class com.google.androidbrowserhelper.trusted.WebViewFallbackActivity { <init>(); }

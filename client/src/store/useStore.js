@@ -61,10 +61,10 @@ const useStore = create((set, get) => ({
         }
     },
 
-    saveSnapshot: async ({ 
+    saveSnapshot: async ({
         cash_savings, investments, personal_assets, other_assets,
         short_term_debt, long_term_debt, debt_interest_rate,
-        income, expenses, risk_level 
+        income, expenses, risk_level, age
     }) => {
         set({ loading: true, error: null });
         try {
@@ -84,6 +84,7 @@ const useStore = create((set, get) => ({
                     income: Number(income) || 0,
                     expenses: Number(expenses) || 0,
                     risk_level: risk_level || 'moderate',
+                    age: Number(age) || 0,
                 }),
             });
             const data = await res.json();
@@ -108,18 +109,18 @@ const useStore = create((set, get) => ({
                 body: JSON.stringify({ snapshot_id: snapshotId, force }),
             });
             const data = await res.json();
-            
+
             // Handle limit reached (429)
             if (res.status === 429 && data.limit_reached) {
-                set({ 
-                    limitReached: true, 
+                set({
+                    limitReached: true,
                     usage: data.usage,
                     error: null,
                     advice: null,
                 });
                 return null;
             }
-            
+
             if (!res.ok) throw new Error(data.error || 'Failed to get advice');
             set({ advice: data, usage: data.usage || null, limitReached: false });
             return data;

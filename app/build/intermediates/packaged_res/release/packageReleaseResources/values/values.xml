@@ -29,7 +29,7 @@
     <string name="launchUrl" translatable="false">https://fin-mind-five.vercel.app/</string>
     <string name="launcherName" translatable="false">FinMind</string>
     <string name="orientation" translatable="false">portrait</string>
-    <string name="providerAuthority" translatable="false">com.finmind.twa.fileprovider</string>
+    <string name="providerAuthority" translatable="false">ai.finmind.app.fileprovider</string>
     <string name="shortcut_name_0" translatable="false">Add Snapshot</string>
     <string name="shortcut_name_1" translatable="false">AI Advisor</string>
     <string name="shortcut_short_name_0" translatable="false">Input</string>

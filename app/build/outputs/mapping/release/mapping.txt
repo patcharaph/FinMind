@@ -3,8 +3,24 @@
 # min_api: 21
 # common_typos_disable
 # {"id":"com.android.tools.r8.mapping","version":"2.2"}
-# pg_map_id: 429b632
-# pg_map_hash: SHA-256 429b63229922aee25556ba2d6fcf0baacaf74101aa5b9360080c351b519d759c
+# pg_map_id: cc7a233
+# pg_map_hash: SHA-256 cc7a23357567873ea92a61208ef849ebd8036ac322192234beb3acc75bcd504b
+ai.finmind.app.Application -> ai.finmind.app.Application:
+# {"id":"sourceFile","fileName":"Application.java"}
+    1:4:void <init>():20:20 -> <init>
+    1:4:void onCreate():26:26 -> onCreate
+ai.finmind.app.DelegationService -> ai.finmind.app.DelegationService:
+# {"id":"sourceFile","fileName":"DelegationService.java"}
+    1:4:void <init>():5:5 -> <init>
+    1:4:void onCreate():9:9 -> onCreate
+ai.finmind.app.LauncherActivity -> ai.finmind.app.LauncherActivity:
+# {"id":"sourceFile","fileName":"LauncherActivity.java"}
+    1:4:void <init>():25:25 -> <init>
+    1:5:android.net.Uri getLaunchingUrl():48:48 -> i
+    1:3:void onCreate(android.os.Bundle):33:33 -> onCreate
+    4:11:void onCreate(android.os.Bundle):38:38 -> onCreate
+    12:16:void onCreate(android.os.Bundle):39:39 -> onCreate
+    17:20:void onCreate(android.os.Bundle):41:41 -> onCreate
 android.support.customtabs.ICustomTabsCallback -> a.a:
 # {"id":"sourceFile","fileName":"ICustomTabsCallback.java"}
     java.lang.String DESCRIPTOR -> a
@@ -22668,22 +22684,6 @@ androidx.versionedparcelable.VersionedParcelParcel -> androidx.versionedparcelab
     1:6:void writeBoolean(boolean):181:181 -> y
 androidx.versionedparcelable.VersionedParcelable -> H.a:
 # {"id":"sourceFile","fileName":"VersionedParcelable.java"}
-com.finmind.twa.Application -> com.finmind.twa.Application:
-# {"id":"sourceFile","fileName":"Application.java"}
-    1:4:void <init>():20:20 -> <init>
-    1:4:void onCreate():26:26 -> onCreate
-com.finmind.twa.DelegationService -> com.finmind.twa.DelegationService:
-# {"id":"sourceFile","fileName":"DelegationService.java"}
-    1:4:void <init>():5:5 -> <init>
-    1:4:void onCreate():9:9 -> onCreate
-com.finmind.twa.LauncherActivity -> com.finmind.twa.LauncherActivity:
-# {"id":"sourceFile","fileName":"LauncherActivity.java"}
-    1:4:void <init>():25:25 -> <init>
-    1:5:android.net.Uri getLaunchingUrl():48:48 -> i
-    1:3:void onCreate(android.os.Bundle):33:33 -> onCreate
-    4:11:void onCreate(android.os.Bundle):38:38 -> onCreate
-    12:16:void onCreate(android.os.Bundle):39:39 -> onCreate
-    17:20:void onCreate(android.os.Bundle):41:41 -> onCreate
 com.google.androidbrowserhelper.R$drawable -> I.a:
     int ic_site_settings -> a
 com.google.androidbrowserhelper.R$string -> I.b:

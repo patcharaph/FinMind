@@ -3,9 +3,9 @@
     "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
-      "package_name": "ai.finmind.app",
+      "package_name": "com.finmind.twa",
       "sha256_cert_fingerprints": [
-        "TODO:REPLACE_WITH_YOUR_SIGNING_KEY_SHA256_FINGERPRINT"
+        "F0:7E:E4:75:D6:DD:4F:A6:5B:A1:13:FF:69:37:C8:60:15:70:EE:10:9A:43:3F:1F:F8:62:19:EB:93:E7:C0:74"
       ]
     }
   }

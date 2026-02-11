@@ -73,7 +73,7 @@ const initDb = () => {
 
     // Migrate: add new columns if they don't exist
     const cols = db.prepare("PRAGMA table_info(snapshots)").all().map(c => c.name);
-    
+
     // New asset/liability columns (v2)
     if (!cols.includes('cash_savings')) {
         db.exec("ALTER TABLE snapshots ADD COLUMN cash_savings REAL DEFAULT 0");
@@ -111,6 +111,11 @@ const initDb = () => {
         db.exec("ALTER TABLE snapshots ADD COLUMN risk_level TEXT DEFAULT 'moderate'");
         console.log('[db] Added risk_level column.');
     }
+    // v3: Add Age
+    if (!cols.includes('age')) {
+        db.exec("ALTER TABLE snapshots ADD COLUMN age INTEGER DEFAULT 0");
+        console.log('[db] Added age column.');
+    }
 
     // Ensure default user exists
     const user = db.prepare('SELECT id FROM users WHERE id = 1').get();
@@ -128,11 +133,11 @@ const computeMetrics = (snap) => {
     const investments = Number(snap.investments) || 0;
     const personalAssets = Number(snap.personal_assets) || 0;
     const otherAssets = Number(snap.other_assets) || 0;
-    
+
     // Liabilities (support both old and new field names)
     const shortTermDebt = Number(snap.short_term_debt) || Number(snap.debt) || 0;
     const longTermDebt = Number(snap.long_term_debt) || 0;
-    
+
     // Income/Expenses
     const income = Number(snap.income) || 0;
     const expenses = Number(snap.expenses) || 0;
@@ -171,15 +176,15 @@ const computeMetrics = (snap) => {
 // --- Snapshot CRUD ---
 
 const upsertSnapshot = (data) => {
-    const { 
-        user_id, market_date, 
+    const {
+        user_id, market_date,
         cash_savings, investments, personal_assets, other_assets,
         short_term_debt, long_term_debt, debt_interest_rate,
-        income, expenses, risk_level 
+        income, expenses, risk_level, age
     } = data;
     const stmt = db.prepare(`
-        INSERT INTO snapshots (user_id, market_date, cash_savings, investments, personal_assets, other_assets, short_term_debt, long_term_debt, debt_interest_rate, income, expenses, risk_level)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO snapshots (user_id, market_date, cash_savings, investments, personal_assets, other_assets, short_term_debt, long_term_debt, debt_interest_rate, income, expenses, risk_level, age)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(user_id, market_date) DO UPDATE SET
             cash_savings = excluded.cash_savings,
             investments = excluded.investments,
@@ -191,13 +196,15 @@ const upsertSnapshot = (data) => {
             income = excluded.income,
             expenses = excluded.expenses,
             risk_level = excluded.risk_level,
+            age = excluded.age,
             created_at = CURRENT_TIMESTAMP
     `);
     const info = stmt.run(user_id, market_date,
         Number(cash_savings) || 0, Number(investments) || 0, Number(personal_assets) || 0, Number(other_assets) || 0,
         Number(short_term_debt) || 0, Number(long_term_debt) || 0, Number(debt_interest_rate) || 0,
         Number(income) || 0, Number(expenses) || 0,
-        risk_level || 'moderate'
+        risk_level || 'moderate',
+        Number(age) || 0
     );
     // Return the row (could be insert or update)
     return db.prepare('SELECT * FROM snapshots WHERE user_id = ? AND market_date = ?').get(user_id, market_date);
